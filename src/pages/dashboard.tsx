@@ -12,7 +12,9 @@ import {
   Phone,
   Mail,
   Calendar,
-  CheckSquare
+  CheckSquare,
+  MessageCircle,
+  AlertCircle
 } from "lucide-react"
 import { 
   BarChart, 
@@ -26,6 +28,7 @@ import {
   LineChart,
   Line
 } from "recharts"
+import { format } from "date-fns"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
 import { Button } from "@/src/components/ui/button"
@@ -46,15 +49,18 @@ import {
   pipelineData, 
   revenueData, 
   dealsAtRisk, 
-  upcomingActivities, 
   topReps, 
   latestProposals 
 } from "@/src/lib/mock-data"
 import { cn } from "@/src/lib/utils"
+import { useActivitiesStore, ActivityType } from "@/src/store/activities"
 
 export function Dashboard() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [period, setPeriod] = React.useState("30d")
+  const { getTodayActivities, updateActivity, openModal } = useActivitiesStore()
+
+  const todayActivities = getTodayActivities()
 
   React.useEffect(() => {
     // Simulate API call
@@ -72,12 +78,14 @@ export function Dashboard() {
     }).format(value)
   }
 
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = (type: ActivityType) => {
     switch (type) {
       case 'call': return <Phone className="h-4 w-4 text-blue-500" />
-      case 'email': return <Mail className="h-4 w-4 text-amber-500" />
+      case 'email': return <Mail className="h-4 w-4 text-emerald-500" />
       case 'meeting': return <Calendar className="h-4 w-4 text-purple-500" />
-      case 'task': return <CheckSquare className="h-4 w-4 text-emerald-500" />
+      case 'task': return <CheckSquare className="h-4 w-4 text-amber-500" />
+      case 'whatsapp': return <MessageCircle className="h-4 w-4 text-green-500" />
+      case 'note': return <FileText className="h-4 w-4 text-slate-500" />
       default: return <CalendarCheck className="h-4 w-4" />
     }
   }
@@ -384,9 +392,14 @@ export function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Próximas Atividades</CardTitle>
-            <CardDescription>Sua agenda para hoje</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Meu Dia</CardTitle>
+              <CardDescription>Sua agenda para hoje</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => openModal()}>
+              Nova Atividade
+            </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -403,31 +416,50 @@ export function Dashboard() {
               </div>
             ) : (
               <div className="space-y-6">
-                {upcomingActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center gap-4">
-                    <div className="w-12 text-sm font-medium text-muted-foreground text-right">
-                      {activity.time}
-                    </div>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1">
-                      <p className={cn(
-                        "text-sm font-medium",
-                        activity.status === 'completed' && "line-through text-muted-foreground"
-                      )}>
-                        {activity.contact}
-                      </p>
-                    </div>
-                    <div>
-                      {activity.status === 'completed' ? (
-                        <Badge variant="secondary" className="text-[10px]">Concluído</Badge>
-                      ) : (
-                        <Button variant="outline" size="sm" className="h-7 text-xs">Concluir</Button>
-                      )}
-                    </div>
+                {todayActivities.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CalendarCheck className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p>Nenhuma atividade para hoje.</p>
                   </div>
-                ))}
+                ) : (
+                  todayActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center gap-4">
+                      <div className="w-12 text-sm font-medium text-muted-foreground text-right">
+                        {format(new Date(activity.date), "HH:mm")}
+                      </div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-sm font-medium truncate",
+                          activity.status === 'done' && "line-through text-muted-foreground"
+                        )}>
+                          {activity.title}
+                        </p>
+                        {(activity.contactName || activity.companyName) && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {activity.contactName} {activity.contactName && activity.companyName && '•'} {activity.companyName}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        {activity.status === 'done' ? (
+                          <Badge variant="secondary" className="text-[10px]">Concluído</Badge>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                            onClick={() => updateActivity(activity.id, { status: 'done' })}
+                          >
+                            Concluir
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </CardContent>

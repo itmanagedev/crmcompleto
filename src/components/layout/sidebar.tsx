@@ -1,5 +1,5 @@
 import * as React from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import { 
   Home, 
   Users, 
@@ -19,6 +19,8 @@ import { Button } from "@/src/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/src/components/ui/tooltip"
 import { Badge } from "@/src/components/ui/badge"
+import { useActivitiesStore } from "@/src/store/activities"
+import { useAuthStore } from "@/src/store/auth"
 
 interface SidebarProps {
   isCollapsed: boolean
@@ -33,12 +35,29 @@ const navItems = [
   { icon: Building2, label: "Empresas", href: "/companies" },
   { icon: KanbanSquare, label: "Pipeline", href: "/pipeline", badge: "3" },
   { icon: FileText, label: "Propostas", href: "/proposals" },
-  { icon: Calendar, label: "Atividades", href: "/activities" },
+  { icon: Calendar, label: "Atividades", href: "/activities", id: "activities" },
   { icon: BarChart3, label: "Relatórios", href: "/reports" },
   { icon: Settings, label: "Configurações", href: "/settings" },
 ]
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  manager: 'Gerente',
+  sales: 'Vendedor',
+  viewer: 'Visualizador',
+}
+
 export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }: SidebarProps) {
+  const { getOverdueCount } = useActivitiesStore()
+  const overdueCount = getOverdueCount()
+  const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate("/login")
+  }
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -104,6 +123,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                           {item.badge}
                         </Badge>
                       )}
+                      {!isCollapsed && item.id === 'activities' && overdueCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px]">
+                          {overdueCount}
+                        </Badge>
+                      )}
                     </NavLink>
                   </TooltipTrigger>
                   {isCollapsed && (
@@ -112,6 +136,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                       {item.badge && (
                         <Badge variant="secondary" className="ml-auto">
                           {item.badge}
+                        </Badge>
+                      )}
+                      {item.id === 'activities' && overdueCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px]">
+                          {overdueCount}
                         </Badge>
                       )}
                     </TooltipContent>
@@ -151,17 +180,22 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
             isCollapsed ? "justify-center" : "justify-between"
           )}>
             <Avatar className="h-9 w-9 shrink-0">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.name} />
+              <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
             {!isCollapsed && (
               <div className="flex flex-1 flex-col overflow-hidden">
-                <span className="truncate text-sm font-medium">João Silva</span>
-                <span className="truncate text-xs text-muted-foreground">Admin</span>
+                <span className="truncate text-sm font-medium">{user?.name || "Usuário"}</span>
+                <span className="truncate text-xs text-muted-foreground">{user?.role ? ROLE_LABELS[user.role] : "Admin"}</span>
               </div>
             )}
             {!isCollapsed && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={handleLogout}
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             )}

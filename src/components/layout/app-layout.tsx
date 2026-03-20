@@ -4,6 +4,7 @@ import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 import { cn } from "@/src/lib/utils"
 import { useTheme } from "@/src/hooks/use-theme"
+import { NewActivityModal } from "@/src/components/activities/new-activity-modal"
 
 export function AppLayout() {
   const [isCollapsed, setIsCollapsed] = React.useState(false)
@@ -14,6 +15,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <NewActivityModal />
       <Sidebar 
         isCollapsed={isCollapsed} 
         setIsCollapsed={setIsCollapsed} 
