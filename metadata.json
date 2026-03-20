@@ -1,0 +1,5 @@
+{
+  "name": "CRM Pro",
+  "description": "Sistema CRM empresarial com React, Tailwind CSS e Zustand",
+  "requestFramePermissions": []
+}
