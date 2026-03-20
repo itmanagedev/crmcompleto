@@ -7,8 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AppLayout } from "./components/layout/app-layout"
 import { Dashboard } from "./pages/dashboard"
 import { Pipeline } from "./pages/pipeline"
-import { Contacts } from "./pages/contacts"
-import { Companies } from "./pages/companies"
+import { ContactsList } from "./pages/contacts/index"
+import { ContactProfile } from "./pages/contacts/[id]"
+import { CompaniesList } from "./pages/companies/index"
+import { CompanyProfile } from "./pages/companies/[id]"
 import { ProposalsList } from "./pages/proposals/index"
 import { NewProposal } from "./pages/proposals/new"
 import { Activities } from "./pages/activities"
@@ -22,8 +24,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="contacts" element={<Contacts />} />
-          <Route path="companies" element={<Companies />} />
+          <Route path="contacts" element={<ContactsList />} />
+          <Route path="contacts/:id" element={<ContactProfile />} />
+          <Route path="companies" element={<CompaniesList />} />
+          <Route path="companies/:id" element={<CompanyProfile />} />
           <Route path="pipeline" element={<Pipeline />} />
           <Route path="proposals" element={<ProposalsList />} />
           <Route path="proposals/new" element={<NewProposal />} />
