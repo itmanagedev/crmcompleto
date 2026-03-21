@@ -63,6 +63,7 @@ import {
 import { Label } from "@/src/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
 import { DealFormDialog, DealFormValues } from "./components/DealFormDialog"
+import { cn } from "@/src/lib/utils"
 
 // --- Types & Mock Data ---
 
@@ -317,8 +318,6 @@ const dealFormSchema = z.object({
   expectedCloseDate: z.string(),
   description: z.string().optional(),
 })
-
-type DealFormValues = z.infer<typeof dealFormSchema>
 
 export function Pipeline() {
   const [deals, setDeals] = React.useState<Deal[]>(INITIAL_DEALS)
