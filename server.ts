@@ -29,6 +29,98 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // ==========================================
+  // Google OAuth Endpoints
+  // ==========================================
+  app.get("/api/auth/google/url", (req, res) => {
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+    
+    const params = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID || '',
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'consent'
+    });
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    res.json({ url: authUrl });
+  });
+
+  app.get(["/api/auth/google/callback", "/api/auth/google/callback/"], async (req, res) => {
+    const { code } = req.query;
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+
+    try {
+      if (!code) throw new Error("No code provided");
+
+      // Exchange code for tokens
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID || '',
+          client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+          code: code as string,
+          grant_type: "authorization_code",
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      const tokenData = await tokenResponse.json();
+      if (!tokenResponse.ok) throw new Error(tokenData.error_description || "Failed to get tokens");
+
+      // Get user info
+      const userResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const userData = await userResponse.json();
+
+      // Send success message to parent window and close popup
+      res.send(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'OAUTH_AUTH_SUCCESS', 
+                  user: {
+                    id: "${userData.id}",
+                    name: "${userData.name}",
+                    email: "${userData.email}",
+                    avatar: "${userData.picture}",
+                    role: "viewer"
+                  },
+                  token: "${tokenData.access_token}"
+                }, '*');
+                window.close();
+              } else {
+                window.location.href = '/';
+              }
+            </script>
+            <p>Autenticação com sucesso. Esta janela fechará automaticamente.</p>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("OAuth error:", error);
+      res.send(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR' }, '*');
+                window.close();
+              }
+            </script>
+            <p>Erro na autenticação. Feche a janela e tente novamente.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
   // Mock Proposals DB
   const proposals: any[] = [];
 
