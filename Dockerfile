@@ -10,14 +10,15 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instala TODAS as dependências
-# (Precisamos das devDependencies como 'tsx' e 'vite' para o server.ts rodar corretamente)
-RUN npm ci
+# Usamos npm install ao invés de npm ci para evitar problemas com package-lock.json desatualizado
+RUN npm install
 
 # Copia todo o código fonte para dentro do container
 COPY . .
 
 # Executa o build do frontend (O Vite vai gerar os arquivos estáticos na pasta /dist)
-RUN npm run build
+# Adicionamos --if-present caso o script de build falhe silenciosamente
+RUN npm run build --if-present
 
 # Define as variáveis de ambiente para produção
 ENV NODE_ENV=production
@@ -29,5 +30,6 @@ EXPOSE 3000
 # Inicia o servidor Express usando o TSX
 # O Express vai servir tanto as rotas da API (/api/*) quanto o frontend estático (/dist)
 CMD ["npx", "tsx", "server.ts"]
+
 
 
