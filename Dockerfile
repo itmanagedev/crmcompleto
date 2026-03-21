@@ -16,6 +16,9 @@ RUN npm install
 # Copia todo o código fonte para dentro do container
 COPY . .
 
+# Gera o client do Prisma para o ambiente Alpine do Docker
+RUN npx prisma generate
+
 # Executa o build do frontend (O Vite vai gerar os arquivos estáticos na pasta /dist)
 # Adicionamos --if-present caso o script de build falhe silenciosamente
 RUN npm run build --if-present
