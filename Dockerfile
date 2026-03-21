@@ -3,15 +3,17 @@
 # ==========================================
 FROM node:20-alpine
 
+# Instala dependências do sistema necessárias para o Prisma no Alpine
+RUN apk add --no-cache openssl libc6-compat
+
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
 
 # Copia os arquivos de dependências primeiro (otimiza o cache do Docker)
 COPY package*.json ./
 
-# Instala TODAS as dependências
-# Usamos npm install ao invés de npm ci para evitar problemas com package-lock.json desatualizado
-RUN npm install
+# Instala TODAS as dependências (incluindo devDependencies, mesmo se NODE_ENV=production for injetado pelo Easypanel)
+RUN npm install --include=dev
 
 # Copia todo o código fonte para dentro do container
 COPY . .
