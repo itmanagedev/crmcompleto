@@ -62,7 +62,7 @@ import {
 } from "@/src/components/ui/sheet"
 import { Label } from "@/src/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
-import { cn } from "@/src/lib/utils"
+import { DealFormDialog, DealFormValues } from "./components/DealFormDialog"
 
 // --- Types & Mock Data ---
 
@@ -325,7 +325,8 @@ export function Pipeline() {
   const [activeDeal, setActiveDeal] = React.useState<Deal | null>(null)
   const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false)
-  const [isNewDealOpen, setIsNewDealOpen] = React.useState(false)
+  const [isDealFormOpen, setIsDealFormOpen] = React.useState(false)
+  const [dealToEdit, setDealToEdit] = React.useState<Deal | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [activeMobileStage, setActiveMobileStage] = React.useState<StageId>('prospeccao')
 
@@ -339,19 +340,6 @@ export function Pipeline() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
-
-  const form = useForm<z.infer<typeof dealFormSchema>>({
-    resolver: zodResolver(dealFormSchema),
-    defaultValues: {
-      title: "",
-      company: "",
-      value: 0,
-      stageId: "prospeccao",
-      probability: 20,
-      expectedCloseDate: new Date().toISOString().split('T')[0],
-      description: "",
-    },
-  })
 
   // Filtered Deals
   const filteredDeals = React.useMemo(() => {
@@ -458,23 +446,62 @@ export function Pipeline() {
     }
   }
 
-  const onSubmitNewDeal = (values: DealFormValues) => {
-    const newDeal: Deal = {
-      id: `deal-${Date.now()}`,
-      title: values.title,
-      company: values.company,
-      companyAvatar: values.company.substring(0, 2).toUpperCase(),
-      value: values.value,
-      probability: values.probability,
-      owner: { name: 'Usuário Atual', avatar: 'https://i.pravatar.cc/150?u=current' },
-      expectedCloseDate: values.expectedCloseDate,
-      daysInStage: 0,
-      stageId: values.stageId as StageId,
-      activities: [],
+  const handleSaveDeal = (values: DealFormValues) => {
+    if (dealToEdit) {
+      setDeals(currentDeals => currentDeals.map(d => 
+        d.id === dealToEdit.id 
+          ? { 
+              ...d, 
+              title: values.title,
+              company: values.company,
+              value: values.value,
+              stageId: values.stageId as StageId,
+              probability: values.probability,
+              expectedCloseDate: values.expectedCloseDate,
+            } 
+          : d
+      ))
+      if (selectedDeal?.id === dealToEdit.id) {
+        setSelectedDeal(prev => prev ? { 
+          ...prev, 
+          title: values.title,
+          company: values.company,
+          value: values.value,
+          stageId: values.stageId as StageId,
+          probability: values.probability,
+          expectedCloseDate: values.expectedCloseDate,
+        } : null)
+      }
+    } else {
+      const newDeal: Deal = {
+        id: `deal-${Date.now()}`,
+        title: values.title,
+        company: values.company,
+        companyAvatar: values.company.substring(0, 2).toUpperCase(),
+        value: values.value,
+        probability: values.probability,
+        owner: { name: 'Usuário Atual', avatar: 'https://i.pravatar.cc/150?u=current' },
+        expectedCloseDate: values.expectedCloseDate,
+        daysInStage: 0,
+        stageId: values.stageId as StageId,
+        activities: [],
+      }
+      setDeals([...deals, newDeal])
     }
-    setDeals([...deals, newDeal])
-    setIsNewDealOpen(false)
-    form.reset()
+    setIsDealFormOpen(false)
+    setDealToEdit(null)
+  }
+
+  const handleOpenNewDeal = () => {
+    setDealToEdit(null)
+    setIsDealFormOpen(true)
+  }
+
+  const handleOpenEditDeal = () => {
+    if (selectedDeal) {
+      setDealToEdit(selectedDeal)
+      setIsDealFormOpen(true)
+    }
   }
 
   return (
@@ -487,59 +514,14 @@ export function Pipeline() {
             <p className="text-muted-foreground">Gerencie suas oportunidades de vendas</p>
           </div>
           <div className="flex items-center gap-2">
-            <Dialog open={isNewDealOpen} onOpenChange={setIsNewDealOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" /> Novo Deal</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Criar Nova Oportunidade</DialogTitle>
-                  <DialogDescription>
-                    Preencha os dados básicos para adicionar um novo deal ao pipeline.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={form.handleSubmit(onSubmitNewDeal)} className="space-y-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 col-span-2">
-                      <Label htmlFor="title">Título do Deal</Label>
-                      <Input id="title" {...form.register("title")} placeholder="Ex: Licenciamento Anual" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Empresa</Label>
-                      <Input id="company" {...form.register("company")} placeholder="Ex: Acme Corp" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="value">Valor (R$)</Label>
-                      <Input id="value" type="number" {...form.register("value", { valueAsNumber: true })} placeholder="0.00" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stageId">Estágio Inicial</Label>
-                      <Select onValueChange={(val) => form.setValue("stageId", val)} defaultValue={form.getValues("stageId")}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STAGES.map(stage => (
-                            <SelectItem key={stage.id} value={stage.id}>{stage.title}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="probability">Probabilidade (%)</Label>
-                      <Input id="probability" type="number" {...form.register("probability", { valueAsNumber: true })} />
-                    </div>
-                    <div className="space-y-2 col-span-2">
-                      <Label htmlFor="expectedCloseDate">Previsão de Fechamento</Label>
-                      <Input id="expectedCloseDate" type="date" {...form.register("expectedCloseDate")} />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit">Salvar Deal</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={handleOpenNewDeal}><Plus className="h-4 w-4 mr-2" /> Novo Deal</Button>
+            <DealFormDialog 
+              open={isDealFormOpen} 
+              onOpenChange={setIsDealFormOpen} 
+              deal={dealToEdit} 
+              onSave={handleSaveDeal} 
+              stages={STAGES} 
+            />
           </div>
         </div>
 
@@ -769,7 +751,7 @@ export function Pipeline() {
                 </div>
                 <div className="flex gap-2">
                   <Button className="flex-1" variant="default">Enviar Proposta</Button>
-                  <Button className="flex-1" variant="outline">Editar Deal</Button>
+                  <Button className="flex-1" variant="outline" onClick={handleOpenEditDeal}>Editar Deal</Button>
                 </div>
               </div>
             </div>

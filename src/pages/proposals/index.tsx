@@ -7,6 +7,7 @@ import { Label } from "@/src/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/src/components/ui/dropdown-menu"
 import { useNavigate } from "react-router-dom"
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer'
 
 interface Proposal {
   id: string
@@ -52,6 +53,70 @@ const getStatusBadge = (status: Proposal['status']) => {
   }
 }
 
+// --- PDF Styles ---
+const pdfStyles = StyleSheet.create({
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#333' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #3b82f6', paddingBottom: 10 },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#3b82f6' },
+  subtitle: { fontSize: 12, color: '#666', marginTop: 4 },
+  section: { marginBottom: 20 },
+  table: { width: '100%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderRightWidth: 0, borderBottomWidth: 0 },
+  tableRow: { flexDirection: 'row' },
+  tableColHeader: { width: '75%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, backgroundColor: '#f9fafb', padding: 5, fontWeight: 'bold' },
+  tableColHeaderValue: { width: '25%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, backgroundColor: '#f9fafb', padding: 5, fontWeight: 'bold' },
+  tableCol: { width: '75%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, padding: 5 },
+  tableColValue: { width: '25%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, padding: 5 },
+  totals: { marginTop: 20, alignItems: 'flex-end' },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', width: 200, marginBottom: 5 },
+  totalLabel: { fontWeight: 'bold' },
+  totalValue: { textAlign: 'right' },
+  finalTotal: { fontSize: 14, fontWeight: 'bold', color: '#3b82f6', marginTop: 5, borderTop: '1px solid #eee', paddingTop: 5 },
+  footer: { position: 'absolute', bottom: 30, left: 40, right: 40, textAlign: 'center', color: '#999', fontSize: 8, borderTop: '1px solid #eee', paddingTop: 10 }
+})
+
+const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => (
+  <Document>
+    <Page size="A4" style={pdfStyles.page}>
+      <View style={pdfStyles.header}>
+        <View>
+          <Text style={pdfStyles.title}>{proposal.title}</Text>
+          <Text style={pdfStyles.subtitle}>Para: {proposal.client}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text>Data: {new Date(proposal.date).toLocaleDateString('pt-BR')}</Text>
+          <Text>Validade: {new Date(proposal.validUntil).toLocaleDateString('pt-BR')}</Text>
+        </View>
+      </View>
+
+      <View style={pdfStyles.section}>
+        <Text>Apresentamos nossa proposta comercial para os serviços solicitados.</Text>
+      </View>
+
+      <View style={pdfStyles.table}>
+        <View style={pdfStyles.tableRow}>
+          <View style={pdfStyles.tableColHeader}><Text>Descrição</Text></View>
+          <View style={pdfStyles.tableColHeaderValue}><Text>Valor Total</Text></View>
+        </View>
+        <View style={pdfStyles.tableRow}>
+          <View style={pdfStyles.tableCol}><Text>{proposal.title}</Text></View>
+          <View style={pdfStyles.tableColValue}><Text>R$ {proposal.value.toFixed(2)}</Text></View>
+        </View>
+      </View>
+
+      <View style={pdfStyles.totals}>
+        <View style={pdfStyles.totalRow}>
+          <Text style={pdfStyles.totalLabel}>Total Final:</Text>
+          <Text style={{ ...pdfStyles.totalValue, ...pdfStyles.finalTotal }}>R$ {proposal.value.toFixed(2)}</Text>
+        </View>
+      </View>
+
+      <Text style={pdfStyles.footer} render={({ pageNumber, totalPages }) => (
+        `Proposta Comercial gerada pelo CRM Pro - Página ${pageNumber} de ${totalPages}`
+      )} fixed />
+    </Page>
+  </Document>
+)
+
 export function ProposalsList() {
   const navigate = useNavigate()
   const [proposals, setProposals] = React.useState<Proposal[]>(MOCK_PROPOSALS)
@@ -68,8 +133,15 @@ export function ProposalsList() {
     })
   }, [proposals, searchQuery, statusFilter])
 
-  const handleAction = (id: string, action: string) => {
-    if (action === 'accept') {
+  const handleAction = async (id: string, action: string) => {
+    if (action === 'view') {
+      const proposal = proposals.find(p => p.id === id)
+      if (proposal) {
+        const blob = await pdf(<SimpleProposalPDF proposal={proposal} />).toBlob()
+        const url = URL.createObjectURL(blob)
+        window.open(url, '_blank')
+      }
+    } else if (action === 'accept') {
       setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'accepted' } : p))
     } else if (action === 'duplicate') {
       const propToDuplicate = proposals.find(p => p.id === id)

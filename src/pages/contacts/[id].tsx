@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { Badge } from "@/src/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
+import { ContactFormDialog, Contact } from "./components/ContactFormDialog"
 
 // Mock Data
-const CONTACT = {
+const INITIAL_CONTACT: Contact = {
   id: '1', name: 'Ana Silva', company: 'TechCorp Solutions', role: 'Diretora de TI', 
-  email: 'ana@techcorp.com', phone: '+55 11 98765-4321', whatsapp: '+55 11 98765-4321',
-  linkedin: 'linkedin.com/in/anasilva', website: 'techcorp.com',
-  createdAt: '2025-10-15', lastActivity: '2026-03-18T14:30:00Z',
+  email: 'ana@techcorp.com', phone: '+55 11 98765-4321',
+  lastContact: '2026-03-18T14:30:00Z',
   status: 'active', tags: ['VIP', 'Decisor', 'Tech'], owner: 'João Silva',
   avatar: 'https://i.pravatar.cc/150?u=ana'
 }
@@ -33,6 +33,8 @@ export function ContactProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = React.useState('timeline')
+  const [contact, setContact] = React.useState<Contact>(INITIAL_CONTACT)
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -44,23 +46,35 @@ export function ContactProfile() {
     }
   }
 
+  const handleSaveContact = (updatedData: Partial<Contact>) => {
+    setContact({ ...contact, ...updatedData } as Contact)
+  }
+
   return (
     <div className="flex flex-col h-full space-y-6 max-w-7xl mx-auto w-full pb-10">
+      <ContactFormDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        contact={contact} 
+        onSave={handleSaveContact} 
+      />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/contacts')} className="h-8 w-8 rounded-full">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            {CONTACT.name}
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 ml-2">Ativo</Badge>
+            {contact.name}
+            {contact.status === 'active' && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 ml-2">Ativo</Badge>}
+            {contact.status === 'lead' && <Badge variant="secondary" className="bg-blue-100 text-blue-700 ml-2">Lead</Badge>}
+            {contact.status === 'inactive' && <Badge variant="secondary" className="bg-slate-100 text-slate-700 ml-2">Inativo</Badge>}
           </h1>
           <p className="text-muted-foreground text-sm flex items-center gap-1">
-            <Building2 className="h-3 w-3" /> {CONTACT.role} em <span className="font-medium hover:underline cursor-pointer" onClick={() => navigate('/companies/1')}>{CONTACT.company}</span>
+            <Building2 className="h-3 w-3" /> {contact.role} em <span className="font-medium hover:underline cursor-pointer" onClick={() => navigate('/companies/1')}>{contact.company}</span>
           </p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm"><Edit2 className="h-4 w-4 mr-2" /> Editar</Button>
+          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}><Edit2 className="h-4 w-4 mr-2" /> Editar</Button>
           <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nova Ação</Button>
         </div>
       </div>
@@ -74,8 +88,8 @@ export function ContactProfile() {
             <CardContent className="pt-0 relative px-6 pb-6">
               <div className="flex justify-center -mt-12 mb-4">
                 <Avatar className="h-24 w-24 border-4 border-background shadow-sm">
-                  <AvatarImage src={CONTACT.avatar} />
-                  <AvatarFallback className="text-2xl">{CONTACT.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={contact.avatar} />
+                  <AvatarFallback className="text-2xl">{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </div>
               
@@ -91,21 +105,21 @@ export function ContactProfile() {
                     <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">E-mail</span>
-                      <a href={`mailto:${CONTACT.email}`} className="font-medium hover:underline text-primary">{CONTACT.email}</a>
+                      <a href={`mailto:${contact.email}`} className="font-medium hover:underline text-primary">{contact.email}</a>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">Telefone</span>
-                      <a href={`tel:${CONTACT.phone}`} className="font-medium hover:underline text-primary">{CONTACT.phone}</a>
+                      <a href={`tel:${contact.phone}`} className="font-medium hover:underline text-primary">{contact.phone}</a>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Linkedin className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">LinkedIn</span>
-                      <a href={`https://${CONTACT.linkedin}`} target="_blank" rel="noreferrer" className="font-medium hover:underline text-primary">{CONTACT.linkedin}</a>
+                      <a href={`https://${(contact as any).linkedin || 'linkedin.com/in/' + contact.name.toLowerCase().replace(' ', '')}`} target="_blank" rel="noreferrer" className="font-medium hover:underline text-primary">{(contact as any).linkedin || 'Não informado'}</a>
                     </div>
                   </div>
                 </div>
@@ -116,7 +130,7 @@ export function ContactProfile() {
                     <Button variant="ghost" size="icon" className="h-5 w-5"><Plus className="h-3 w-3" /></Button>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {CONTACT.tags.map(tag => (
+                    {contact.tags.map(tag => (
                       <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50 hover:bg-muted cursor-pointer flex items-center gap-1">
                         <Tag className="h-2.5 w-2.5" /> {tag}
                       </Badge>
@@ -127,11 +141,11 @@ export function ContactProfile() {
                 <div className="pt-4 border-t space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Responsável</span>
-                    <span className="font-medium flex items-center gap-1"><User className="h-3 w-3" /> {CONTACT.owner}</span>
+                    <span className="font-medium flex items-center gap-1"><User className="h-3 w-3" /> {contact.owner}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Criado em</span>
-                    <span className="font-medium">{new Date(CONTACT.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span className="font-medium">{new Date((contact as any).createdAt || new Date()).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
               </div>
@@ -227,10 +241,10 @@ export function ContactProfile() {
             <CardContent>
               <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate('/companies/1')}>
                 <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary font-bold">
-                  TS
+                  {contact.company.substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col overflow-hidden">
-                  <span className="font-medium text-sm truncate">TechCorp Solutions</span>
+                  <span className="font-medium text-sm truncate">{contact.company}</span>
                   <span className="text-xs text-muted-foreground truncate">Tecnologia da Informação</span>
                 </div>
               </div>

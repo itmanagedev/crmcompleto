@@ -1,28 +1,12 @@
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
-import { Search, Plus, Filter, MoreHorizontal, Grid, List, Download, Tag, UserPlus, Building2, MapPin, Globe, Phone, Mail } from "lucide-react"
+import { Search, Plus, Filter, MoreHorizontal, Grid, List, Download, Tag, UserPlus, Building2, MapPin, Globe, Phone, Mail, Edit2, Trash2 } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { Badge } from "@/src/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/src/components/ui/dropdown-menu"
-
-interface Company {
-  id: string
-  name: string
-  industry: string
-  size: string
-  revenue: string
-  city: string
-  state: string
-  website: string
-  contactsCount: number
-  dealsCount: number
-  status: 'active' | 'inactive' | 'prospect'
-  tags: string[]
-  logo?: string
-  owner: string
-}
+import { CompanyFormDialog, Company } from "./components/CompanyFormDialog"
 
 const MOCK_COMPANIES: Company[] = [
   { id: '1', name: 'TechCorp Solutions', industry: 'Tecnologia da Informação', size: '500-1000', revenue: 'R$ 50M - 100M', city: 'São Paulo', state: 'SP', website: 'techcorp.com', contactsCount: 5, dealsCount: 2, status: 'active', tags: ['Enterprise', 'Key Account'], owner: 'João Silva' },
@@ -34,10 +18,14 @@ const MOCK_COMPANIES: Company[] = [
 
 export function CompaniesList() {
   const navigate = useNavigate()
+  const [companies, setCompanies] = React.useState<Company[]>(MOCK_COMPANIES)
   const [viewMode, setViewMode] = React.useState<'table' | 'grid'>('table')
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [selectedCompanies, setSelectedCompanies] = React.useState<Set<string>>(new Set())
+  
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [editingCompany, setEditingCompany] = React.useState<Company | null>(null)
 
   // Debounce search
   React.useEffect(() => {
@@ -46,12 +34,12 @@ export function CompaniesList() {
   }, [searchQuery])
 
   const filteredCompanies = React.useMemo(() => {
-    return MOCK_COMPANIES.filter(company => 
+    return companies.filter(company => 
       company.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       company.industry.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       company.city.toLowerCase().includes(debouncedSearch.toLowerCase())
     )
-  }, [debouncedSearch])
+  }, [companies, debouncedSearch])
 
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedCompanies)
@@ -65,8 +53,51 @@ export function CompaniesList() {
     else setSelectedCompanies(new Set(filteredCompanies.map(c => c.id)))
   }
 
+  const handleOpenNew = () => {
+    setEditingCompany(null)
+    setIsDialogOpen(true)
+  }
+
+  const handleOpenEdit = (company: Company) => {
+    setEditingCompany(company)
+    setIsDialogOpen(true)
+  }
+
+  const handleDelete = (id: string) => {
+    setCompanies(prev => prev.filter(c => c.id !== id))
+  }
+
+  const handleSave = (companyData: Partial<Company>) => {
+    if (editingCompany) {
+      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...companyData } as Company : c))
+    } else {
+      const newCompany: Company = {
+        id: `${companies.length + 1}`,
+        name: companyData.name || 'Nova Empresa',
+        industry: companyData.industry || 'Não informado',
+        size: companyData.size || 'Não informado',
+        revenue: companyData.revenue || 'Não informado',
+        city: companyData.city || 'Não informado',
+        state: companyData.state || 'Não informado',
+        website: companyData.website || 'Não informado',
+        contactsCount: companyData.contactsCount || 0,
+        dealsCount: companyData.dealsCount || 0,
+        status: companyData.status || 'prospect',
+        tags: companyData.tags || [],
+        owner: companyData.owner || 'Não atribuído'
+      }
+      setCompanies([newCompany, ...companies])
+    }
+  }
+
   return (
     <div className="flex flex-col h-full space-y-6">
+      <CompanyFormDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        company={editingCompany} 
+        onSave={handleSave} 
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
@@ -74,7 +105,7 @@ export function CompaniesList() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline"><Download className="h-4 w-4 mr-2" /> Exportar</Button>
-          <Button onClick={() => navigate('/companies/new')}><Plus className="h-4 w-4 mr-2" /> Nova Empresa</Button>
+          <Button onClick={handleOpenNew}><Plus className="h-4 w-4 mr-2" /> Nova Empresa</Button>
         </div>
       </div>
 
@@ -186,8 +217,8 @@ export function CompaniesList() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`/companies/${company.id}`)}>Ver Perfil</DropdownMenuItem>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Excluir</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenEdit(company)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(company.id)}>Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -210,7 +241,8 @@ export function CompaniesList() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => navigate(`/companies/${company.id}`)}>Ver Perfil</DropdownMenuItem>
-                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleOpenEdit(company)}>Editar</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(company.id)}>Excluir</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -7,20 +7,7 @@ import { Badge } from "@/src/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/src/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/src/components/ui/dialog"
-
-interface Contact {
-  id: string
-  name: string
-  company: string
-  role: string
-  email: string
-  phone: string
-  lastContact: string
-  status: 'active' | 'inactive' | 'lead'
-  tags: string[]
-  avatar?: string
-  owner: string
-}
+import { ContactFormDialog, Contact } from "./components/ContactFormDialog"
 
 const MOCK_CONTACTS: Contact[] = [
   { id: '1', name: 'Ana Silva', company: 'TechCorp Solutions', role: 'Diretora de TI', email: 'ana@techcorp.com', phone: '(11) 98765-4321', lastContact: '2026-03-18', status: 'active', tags: ['VIP', 'Decisor'], owner: 'João Silva' },
@@ -36,6 +23,9 @@ export function ContactsList() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [selectedContacts, setSelectedContacts] = React.useState<Set<string>>(new Set())
+  const [contacts, setContacts] = React.useState<Contact[]>(MOCK_CONTACTS)
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [editingContact, setEditingContact] = React.useState<Contact | null>(null)
 
   // Debounce search
   React.useEffect(() => {
@@ -44,12 +34,12 @@ export function ContactsList() {
   }, [searchQuery])
 
   const filteredContacts = React.useMemo(() => {
-    return MOCK_CONTACTS.filter(contact => 
+    return contacts.filter(contact => 
       contact.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       contact.company.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
       contact.email.toLowerCase().includes(debouncedSearch.toLowerCase())
     )
-  }, [debouncedSearch])
+  }, [debouncedSearch, contacts])
 
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedContacts)
@@ -63,8 +53,46 @@ export function ContactsList() {
     else setSelectedContacts(new Set(filteredContacts.map(c => c.id)))
   }
 
+  const handleOpenNew = () => {
+    setEditingContact(null)
+    setIsDialogOpen(true)
+  }
+
+  const handleOpenEdit = (contact: Contact) => {
+    setEditingContact(contact)
+    setIsDialogOpen(true)
+  }
+
+  const handleSaveContact = (contactData: Partial<Contact>) => {
+    if (editingContact) {
+      setContacts(contacts.map(c => c.id === editingContact.id ? { ...c, ...contactData } as Contact : c))
+    } else {
+      const newContact: Contact = {
+        ...contactData as Contact,
+        id: Math.random().toString(36).substr(2, 9),
+        lastContact: new Date().toISOString(),
+        tags: [],
+        owner: 'Usuário Atual'
+      }
+      setContacts([newContact, ...contacts])
+    }
+  }
+
+  const handleDeleteContact = (id: string) => {
+    setContacts(contacts.filter(c => c.id !== id))
+    const newSelection = new Set(selectedContacts)
+    newSelection.delete(id)
+    setSelectedContacts(newSelection)
+  }
+
   return (
     <div className="flex flex-col h-full space-y-6">
+      <ContactFormDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        contact={editingContact} 
+        onSave={handleSaveContact} 
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Contatos</h1>
@@ -91,7 +119,7 @@ export function ContactsList() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button onClick={() => navigate('/contacts/new')}><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>
+          <Button onClick={handleOpenNew}><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>
         </div>
       </div>
 
@@ -202,8 +230,8 @@ export function ContactsList() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`/contacts/${contact.id}`)}>Ver Perfil</DropdownMenuItem>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Excluir</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenEdit(contact)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteContact(contact.id)}>Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -226,7 +254,8 @@ export function ContactsList() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => navigate(`/contacts/${contact.id}`)}>Ver Perfil</DropdownMenuItem>
-                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleOpenEdit(contact)}>Editar</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteContact(contact.id)}>Excluir</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

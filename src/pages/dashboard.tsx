@@ -29,6 +29,7 @@ import {
   Line
 } from "recharts"
 import { format } from "date-fns"
+import { useNavigate } from "react-router-dom"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card"
 import { Button } from "@/src/components/ui/button"
@@ -56,6 +57,7 @@ import { cn } from "@/src/lib/utils"
 import { useActivitiesStore, ActivityType } from "@/src/store/activities"
 
 export function Dashboard() {
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = React.useState(true)
   const [period, setPeriod] = React.useState("30d")
   const { getTodayActivities, updateActivity, openModal } = useActivitiesStore()
@@ -117,7 +119,7 @@ export function Dashboard() {
               <SelectItem value="90d">Últimos 90 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Nova Proposta</Button>
+          <Button onClick={() => navigate('/proposals/new')}>Nova Proposta</Button>
         </div>
       </div>
 

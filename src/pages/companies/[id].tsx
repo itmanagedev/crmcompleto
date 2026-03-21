@@ -6,17 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { Badge } from "@/src/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
+import { CompanyFormDialog, Company } from "./components/CompanyFormDialog"
 
 // Mock Data
-const COMPANY = {
+const INITIAL_COMPANY: Company = {
   id: '1', name: 'TechCorp Solutions', industry: 'Tecnologia da Informação', size: '500-1000 funcionários', 
-  revenue: 'R$ 50M - 100M', cnpj: '12.345.678/0001-90',
+  revenue: 'R$ 50M - 100M', city: 'São Paulo', state: 'SP',
   email: 'contato@techcorp.com', phone: '+55 11 3000-4321',
   linkedin: 'linkedin.com/company/techcorp', website: 'techcorp.com',
   address: 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP, 01310-100',
   createdAt: '2025-10-15', lastActivity: '2026-03-18T14:30:00Z',
   status: 'active', tags: ['Enterprise', 'Key Account', 'SaaS'], owner: 'João Silva',
-}
+  contactsCount: 5, dealsCount: 2, cnpj: '12.345.678/0001-90'
+} as any
 
 const CONTACTS = [
   { id: '1', name: 'Ana Silva', role: 'Diretora de TI', email: 'ana@techcorp.com', phone: '(11) 98765-4321', avatar: 'https://i.pravatar.cc/150?u=ana' },
@@ -33,24 +35,38 @@ export function CompanyProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = React.useState('overview')
+  const [company, setCompany] = React.useState<Company>(INITIAL_COMPANY)
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+
+  const handleSaveCompany = (updatedData: Partial<Company>) => {
+    setCompany({ ...company, ...updatedData } as Company)
+  }
 
   return (
     <div className="flex flex-col h-full space-y-6 max-w-7xl mx-auto w-full pb-10">
+      <CompanyFormDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        company={company} 
+        onSave={handleSaveCompany} 
+      />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/companies')} className="h-8 w-8 rounded-full">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            {COMPANY.name}
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 ml-2">Ativa</Badge>
+            {company.name}
+            {company.status === 'active' && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 ml-2">Ativa</Badge>}
+            {company.status === 'prospect' && <Badge variant="secondary" className="bg-blue-100 text-blue-700 ml-2">Prospect</Badge>}
+            {company.status === 'inactive' && <Badge variant="secondary" className="bg-slate-100 text-slate-700 ml-2">Inativa</Badge>}
           </h1>
           <p className="text-muted-foreground text-sm flex items-center gap-1">
-            <Globe className="h-3 w-3" /> <a href={`https://${COMPANY.website}`} target="_blank" rel="noreferrer" className="hover:underline">{COMPANY.website}</a>
+            <Globe className="h-3 w-3" /> <a href={`https://${company.website}`} target="_blank" rel="noreferrer" className="hover:underline">{company.website}</a>
           </p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm"><Edit2 className="h-4 w-4 mr-2" /> Editar</Button>
+          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}><Edit2 className="h-4 w-4 mr-2" /> Editar</Button>
           <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Novo Deal</Button>
         </div>
       </div>
@@ -64,7 +80,7 @@ export function CompanyProfile() {
             <CardContent className="pt-0 relative px-6 pb-6">
               <div className="flex justify-center -mt-12 mb-4">
                 <div className="h-24 w-24 rounded-lg border-4 border-background bg-white shadow-sm flex items-center justify-center text-3xl font-bold text-slate-800">
-                  {COMPANY.name.substring(0, 2).toUpperCase()}
+                  {company.name.substring(0, 2).toUpperCase()}
                 </div>
               </div>
               
@@ -74,28 +90,28 @@ export function CompanyProfile() {
                     <Building2 className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">Segmento</span>
-                      <span className="font-medium">{COMPANY.industry}</span>
+                      <span className="font-medium">{company.industry}</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">Porte</span>
-                      <span className="font-medium">{COMPANY.size}</span>
+                      <span className="font-medium">{company.size}</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">Faturamento Estimado</span>
-                      <span className="font-medium">{COMPANY.revenue}</span>
+                      <span className="font-medium">{company.revenue}</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground text-xs">CNPJ</span>
-                      <span className="font-medium">{COMPANY.cnpj}</span>
+                      <span className="font-medium">{(company as any).cnpj || 'Não informado'}</span>
                     </div>
                   </div>
                 </div>
@@ -106,7 +122,7 @@ export function CompanyProfile() {
                     <Button variant="ghost" size="icon" className="h-5 w-5"><Plus className="h-3 w-3" /></Button>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {COMPANY.tags.map(tag => (
+                    {company.tags.map(tag => (
                       <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50 hover:bg-muted cursor-pointer flex items-center gap-1">
                         <Tag className="h-2.5 w-2.5" /> {tag}
                       </Badge>
@@ -117,11 +133,11 @@ export function CompanyProfile() {
                 <div className="pt-4 border-t space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Responsável</span>
-                    <span className="font-medium flex items-center gap-1"><User className="h-3 w-3" /> {COMPANY.owner}</span>
+                    <span className="font-medium flex items-center gap-1"><User className="h-3 w-3" /> {company.owner}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Criada em</span>
-                    <span className="font-medium">{new Date(COMPANY.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span className="font-medium">{new Date((company as any).createdAt || new Date()).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
               </div>
@@ -146,7 +162,7 @@ export function CompanyProfile() {
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-3 text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <span>{COMPANY.address}</span>
+                    <span>{(company as any).address || `${company.city}, ${company.state}`}</span>
                   </div>
                   <div className="w-full h-[250px] bg-muted rounded-md overflow-hidden border relative">
                     {/* Mock Google Maps iframe */}
@@ -154,7 +170,7 @@ export function CompanyProfile() {
                       <div className="text-center text-muted-foreground">
                         <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">Mapa do Endereço</p>
-                        <p className="text-xs mt-1">Av. Paulista, 1000 - São Paulo, SP</p>
+                        <p className="text-xs mt-1">{company.city}, {company.state}</p>
                       </div>
                     </div>
                   </div>
@@ -169,19 +185,19 @@ export function CompanyProfile() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <span className="text-muted-foreground text-xs">Telefone Principal</span>
-                      <p className="font-medium">{COMPANY.phone}</p>
+                      <p className="font-medium">{(company as any).phone || 'Não informado'}</p>
                     </div>
                     <div className="space-y-1">
                       <span className="text-muted-foreground text-xs">E-mail Geral</span>
-                      <p className="font-medium">{COMPANY.email}</p>
+                      <p className="font-medium">{(company as any).email || 'Não informado'}</p>
                     </div>
                     <div className="space-y-1">
                       <span className="text-muted-foreground text-xs">LinkedIn</span>
-                      <p className="font-medium text-primary hover:underline cursor-pointer">{COMPANY.linkedin}</p>
+                      <p className="font-medium text-primary hover:underline cursor-pointer">{(company as any).linkedin || 'Não informado'}</p>
                     </div>
                     <div className="space-y-1">
                       <span className="text-muted-foreground text-xs">Website</span>
-                      <p className="font-medium text-primary hover:underline cursor-pointer">{COMPANY.website}</p>
+                      <p className="font-medium text-primary hover:underline cursor-pointer">{company.website}</p>
                     </div>
                   </div>
                 </CardContent>
