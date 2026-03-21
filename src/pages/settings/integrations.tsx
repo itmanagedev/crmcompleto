@@ -3,6 +3,9 @@ import { Mail, Calendar, MessageSquare, BarChart, Link as LinkIcon, Zap, CheckCi
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/src/components/ui/dialog"
+import { Input } from "@/src/components/ui/input"
+import { Label } from "@/src/components/ui/label"
 
 const INTEGRATIONS = [
   {
@@ -13,6 +16,10 @@ const INTEGRATIONS = [
     status: 'connected',
     color: 'text-red-500',
     bgColor: 'bg-red-50',
+    settings: [
+      { id: 'email', label: 'E-mail Conectado', type: 'email', value: 'contato@empresa.com' },
+      { id: 'sync_frequency', label: 'Frequência de Sincronização', type: 'text', value: 'A cada 15 minutos' }
+    ]
   },
   {
     id: 'gcal',
@@ -31,6 +38,10 @@ const INTEGRATIONS = [
     status: 'connected',
     color: 'text-green-500',
     bgColor: 'bg-green-50',
+    settings: [
+      { id: 'api_key', label: 'API Key', type: 'password', value: '************************' },
+      { id: 'phone_number', label: 'Número Conectado', type: 'text', value: '+55 11 99999-9999' }
+    ]
   },
   {
     id: 'analytics',
@@ -49,6 +60,10 @@ const INTEGRATIONS = [
     status: 'connected',
     color: 'text-indigo-500',
     bgColor: 'bg-indigo-50',
+    settings: [
+      { id: 'webhook_url', label: 'URL do Webhook', type: 'url', value: 'https://api.meusistema.com/webhook' },
+      { id: 'secret', label: 'Secret Key', type: 'password', value: '************************' }
+    ]
   },
   {
     id: 'zapier',
@@ -62,6 +77,14 @@ const INTEGRATIONS = [
 ]
 
 export function IntegrationsSettings() {
+  const [selectedIntegration, setSelectedIntegration] = React.useState<any>(null)
+  const [isConfigOpen, setIsConfigOpen] = React.useState(false)
+
+  const handleConfigure = (integration: any) => {
+    setSelectedIntegration(integration)
+    setIsConfigOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -103,7 +126,7 @@ export function IntegrationsSettings() {
               <CardFooter className="mt-auto pt-4 border-t flex justify-between">
                 {isConnected ? (
                   <>
-                    <Button variant="outline" size="sm" className="text-muted-foreground">
+                    <Button variant="outline" size="sm" className="text-muted-foreground" onClick={() => handleConfigure(integration)}>
                       <Settings2 className="mr-2 h-4 w-4" />
                       Configurar
                     </Button>
@@ -121,6 +144,36 @@ export function IntegrationsSettings() {
           )
         })}
       </div>
+
+      <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Configurar {selectedIntegration?.name}</DialogTitle>
+            <DialogDescription>
+              Ajuste as configurações da integração.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {selectedIntegration?.settings?.map((setting: any) => (
+              <div key={setting.id} className="grid gap-2">
+                <Label htmlFor={setting.id}>{setting.label}</Label>
+                <Input
+                  id={setting.id}
+                  type={setting.type}
+                  defaultValue={setting.value}
+                />
+              </div>
+            ))}
+            {!selectedIntegration?.settings && (
+              <p className="text-sm text-muted-foreground">Nenhuma configuração adicional disponível para esta integração.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigOpen(false)}>Cancelar</Button>
+            <Button onClick={() => setIsConfigOpen(false)}>Salvar Alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

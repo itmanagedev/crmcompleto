@@ -70,6 +70,7 @@ const formatCurrency = (value: number) => {
 export function Reports() {
   const [activeReport, setActiveReport] = React.useState('funnel')
   const [period, setPeriod] = React.useState('this_year')
+  const [salesRep, setSalesRep] = React.useState('all')
 
   const handleExportExcel = (data: any[], filename: string) => {
     const ws = XLSX.utils.json_to_sheet(data)
@@ -525,6 +526,20 @@ export function Reports() {
                 <SelectItem value="last_month">Mês Passado</SelectItem>
                 <SelectItem value="this_quarter">Este Trimestre</SelectItem>
                 <SelectItem value="this_year">Este Ano</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-md border">
+            <Select value={salesRep} onValueChange={setSalesRep}>
+              <SelectTrigger className="w-[180px] border-none bg-transparent shadow-none focus:ring-0">
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Vendedores</SelectItem>
+                <SelectItem value="ana">Ana Silva</SelectItem>
+                <SelectItem value="carlos">Carlos Mendes</SelectItem>
+                <SelectItem value="mariana">Mariana Costa</SelectItem>
+                <SelectItem value="roberto">Roberto Alves</SelectItem>
               </SelectContent>
             </Select>
           </div>

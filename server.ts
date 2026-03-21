@@ -4,8 +4,11 @@ import path from "path";
 import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
+
+const prisma = new PrismaClient();
 
 async function startServer() {
   const app = express();
@@ -25,8 +28,149 @@ async function startServer() {
   });
 
   // API Routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+  app.get("/api/health", async (req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: "ok", database: "connected" });
+    } catch (error) {
+      res.json({ status: "ok", database: "disconnected", error: String(error) });
+    }
+  });
+
+  // ==========================================
+  // API: Companies
+  // ==========================================
+  app.get("/api/companies", async (req, res) => {
+    try {
+      const companies = await prisma.company.findMany({
+        include: { _count: { select: { contacts: true, deals: true } } }
+      });
+      res.json(companies);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch companies" });
+    }
+  });
+
+  app.post("/api/companies", async (req, res) => {
+    try {
+      const company = await prisma.company.create({ data: req.body });
+      res.json(company);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create company" });
+    }
+  });
+
+  app.get("/api/companies/:id", async (req, res) => {
+    try {
+      const company = await prisma.company.findUnique({
+        where: { id: req.params.id },
+        include: { contacts: true, deals: true }
+      });
+      if (company) res.json(company);
+      else res.status(404).json({ error: "Company not found" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch company" });
+    }
+  });
+
+  app.put("/api/companies/:id", async (req, res) => {
+    try {
+      const company = await prisma.company.update({
+        where: { id: req.params.id },
+        data: req.body
+      });
+      res.json(company);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update company" });
+    }
+  });
+
+  app.delete("/api/companies/:id", async (req, res) => {
+    try {
+      await prisma.company.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete company" });
+    }
+  });
+
+  // ==========================================
+  // API: Contacts
+  // ==========================================
+  app.get("/api/contacts", async (req, res) => {
+    try {
+      const contacts = await prisma.contact.findMany({
+        include: { company: true }
+      });
+      res.json(contacts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch contacts" });
+    }
+  });
+
+  app.post("/api/contacts", async (req, res) => {
+    try {
+      const contact = await prisma.contact.create({ data: req.body });
+      res.json(contact);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create contact" });
+    }
+  });
+
+  // ==========================================
+  // API: Deals
+  // ==========================================
+  app.get("/api/deals", async (req, res) => {
+    try {
+      const deals = await prisma.deal.findMany({
+        include: { company: true, contact: true }
+      });
+      res.json(deals);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch deals" });
+    }
+  });
+
+  app.post("/api/deals", async (req, res) => {
+    try {
+      const deal = await prisma.deal.create({ data: req.body });
+      res.json(deal);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create deal" });
+    }
+  });
+
+  app.patch("/api/deals/:id/stage", async (req, res) => {
+    try {
+      const deal = await prisma.deal.update({
+        where: { id: req.params.id },
+        data: { stage: req.body.stage }
+      });
+      res.json(deal);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update deal stage" });
+    }
+  });
+
+  // ==========================================
+  // API: Activities
+  // ==========================================
+  app.get("/api/activities", async (req, res) => {
+    try {
+      const activities = await prisma.activity.findMany();
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch activities" });
+    }
+  });
+
+  app.post("/api/activities", async (req, res) => {
+    try {
+      const activity = await prisma.activity.create({ data: req.body });
+      res.json(activity);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create activity" });
+    }
   });
 
   // ==========================================

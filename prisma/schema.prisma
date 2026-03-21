@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("viewer") // admin, manager, sales, viewer
+  status        String    @default("pending") // active, inactive, pending
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  companies     Company[]
+  contacts      Contact[]
+  deals         Deal[]
+  activities    Activity[]
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  industry    String?
+  size        String?
+  revenue     String?
+  city        String?
+  state       String?
+  email       String?
+  phone       String?
+  linkedin    String?
+  website     String?
+  address     String?
+  cnpj        String?
+  status      String    @default("prospect") // active, prospect, inactive
+  tags        String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id])
+  
+  contacts    Contact[]
+  deals       Deal[]
+}
+
+model Contact {
+  id          String    @id @default(cuid())
+  name        String
+  role        String?
+  email       String?
+  phone       String?
+  linkedin    String?
+  avatar      String?
+  status      String    @default("lead") // active, lead, inactive
+  tags        String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id])
+  
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id])
+  
+  deals       Deal[]
+}
+
+model Deal {
+  id          String    @id @default(cuid())
+  title       String
+  value       Float     @default(0)
+  stage       String
+  status      String    @default("open") // open, won, lost
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id])
+  
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id])
+}
+
+model Activity {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  type        String    // call, email, meeting, task, whatsapp, note
+  status      String    @default("todo") // todo, done
+  priority    String    @default("medium") // low, medium, high
+  date        DateTime
+  duration    Int?      @default(30)
+  reminder    String?
+  recurrence  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerId     String?
+  owner       User?     @relation(fields: [ownerId], references: [id])
+}
