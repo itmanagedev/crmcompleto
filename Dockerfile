@@ -1,51 +1,43 @@
 # ==========================================
-# Estágio 1: Build (Construtor)
+# Estágio 1: Build da Aplicação
 # ==========================================
 FROM node:20-alpine AS builder
 
-# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependências
+# Copia os arquivos de dependências primeiro (melhora o cache do Docker)
 COPY package*.json ./
 
-# Instala as dependências (usando ci para builds mais limpos e rápidos)
+# Instala as dependências
 RUN npm ci
 
-# Copia o restante do código fonte
+# Copia todo o código fonte
 COPY . .
 
-# Executa o build da aplicação (Vite gera os arquivos estáticos na pasta dist)
+# Executa o build (gera a pasta /dist)
 RUN npm run build
 
 # ==========================================
-# Estágio 2: Production (Produção)
+# Estágio 2: Servidor Web (Nginx)
 # ==========================================
-FROM nginx:alpine AS production
-
-# Define a variável de ambiente para a porta (Easypanel e Cloud Run usam 3000 por padrão)
-ENV PORT=3000
+FROM nginx:alpine
 
 # Remove a configuração padrão do Nginx
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Cria uma configuração customizada do Nginx para servir a SPA na porta 3000
-RUN echo "server { \
+# Cria uma configuração simples e à prova de falhas para React/Vite na porta 3000
+RUN echo 'server { \
     listen 3000; \
-    server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
+    \
+    # Redireciona todas as rotas para o index.html (essencial para React Router) \
     location / { \
-        try_files \$uri \$uri/ /index.html; \
+        try_files $uri $uri/ /index.html; \
     } \
-    # Cache de assets estáticos \
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ { \
-        expires 1y; \
-        add_header Cache-Control \"public, no-transform\"; \
-    } \
-}" > /etc/nginx/conf.d/default.conf
+}' > /etc/nginx/conf.d/default.conf
 
-# Copia os arquivos buildados do estágio anterior para o diretório do Nginx
+# Copia os arquivos gerados no estágio 1 para o Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expõe a porta 3000
@@ -53,3 +45,4 @@ EXPOSE 3000
 
 # Inicia o Nginx
 CMD ["nginx", "-g", "daemon off;"]
+
