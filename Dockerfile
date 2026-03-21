@@ -1,48 +1,33 @@
 # ==========================================
-# Estágio 1: Build da Aplicação
+# Dockerfile para Aplicação Fullstack (Express + React/Vite)
 # ==========================================
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copia os arquivos de dependências primeiro (melhora o cache do Docker)
+# Copia os arquivos de dependências primeiro (otimiza o cache do Docker)
 COPY package*.json ./
 
-# Instala as dependências
+# Instala TODAS as dependências
+# (Precisamos das devDependencies como 'tsx' e 'vite' para o server.ts rodar corretamente)
 RUN npm ci
 
-# Copia todo o código fonte
+# Copia todo o código fonte para dentro do container
 COPY . .
 
-# Executa o build (gera a pasta /dist)
+# Executa o build do frontend (O Vite vai gerar os arquivos estáticos na pasta /dist)
 RUN npm run build
 
-# ==========================================
-# Estágio 2: Servidor Web (Nginx)
-# ==========================================
-FROM nginx:alpine
+# Define as variáveis de ambiente para produção
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Remove a configuração padrão do Nginx
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Cria uma configuração simples e à prova de falhas para React/Vite na porta 3000
-RUN echo 'server { \
-    listen 3000; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    \
-    # Redireciona todas as rotas para o index.html (essencial para React Router) \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
-# Copia os arquivos gerados no estágio 1 para o Nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Expõe a porta 3000
+# Expõe a porta 3000 (Padrão do Easypanel)
 EXPOSE 3000
 
-# Inicia o Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Inicia o servidor Express usando o TSX
+# O Express vai servir tanto as rotas da API (/api/*) quanto o frontend estático (/dist)
+CMD ["npx", "tsx", "server.ts"]
+
 
