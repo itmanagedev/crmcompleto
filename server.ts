@@ -265,18 +265,128 @@ async function startServer() {
     }
   });
 
-  // Mock Proposals DB
-  const proposals: any[] = [];
+  app.get("/api/proposals", async (req, res) => {
+    try {
+      const proposals = await prisma.proposal.findMany({
+        include: { deal: true, template: true },
+        orderBy: { createdAt: 'desc' }
+      });
+      res.json(proposals);
+    } catch (error) {
+      console.error("Error fetching proposals:", error);
+      res.status(500).json({ error: "Failed to fetch proposals" });
+    }
+  });
 
-  app.post("/api/propostas", (req, res) => {
-    const newProposal = {
-      id: `PROP-${Date.now().toString().slice(-4)}`,
-      ...req.body,
-      status: 'draft',
-      date: new Date().toISOString()
-    };
-    proposals.push(newProposal);
-    res.json(newProposal);
+  app.get("/api/templates", async (req, res) => {
+    try {
+      const templates = await prisma.proposalTemplate.findMany();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  app.post("/api/templates", async (req, res) => {
+    try {
+      const { templates } = req.body;
+      
+      // Basic sync: delete all and recreate (for simplicity in this example)
+      await prisma.proposalTemplate.deleteMany();
+      
+      const created = await prisma.proposalTemplate.createMany({
+        data: templates.map((t: any) => ({
+          name: t.name,
+          logo: t.logo || null,
+          primaryColor: t.primaryColor,
+          companyName: t.companyName,
+          companyInfo: t.companyInfo || null
+        }))
+      });
+      
+      res.json(created);
+    } catch (error) {
+      console.error("Error saving templates:", error);
+      res.status(500).json({ error: "Failed to save templates" });
+    }
+  });
+
+  app.post("/api/proposals", async (req, res) => {
+    try {
+      const { dealId, totalValue, observations, services, status, templateId, title } = req.body;
+      const linkHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const proposal = await prisma.proposal.create({
+        data: {
+          title: title || "Proposta Comercial",
+          dealId,
+          templateId,
+          totalValue,
+          observations,
+          services,
+          status,
+          linkHash
+        }
+      });
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error creating proposal:", error);
+      res.status(500).json({ error: "Failed to create proposal" });
+    }
+  });
+
+  app.get("/api/proposals/:hash", async (req, res) => {
+    try {
+      const { hash } = req.params;
+      const proposal = await prisma.proposal.findUnique({
+        where: { linkHash: hash },
+        include: { deal: true, template: true }
+      });
+      if (!proposal) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error fetching proposal:", error);
+      res.status(500).json({ error: "Failed to fetch proposal" });
+    }
+  });
+
+  app.post("/api/proposals/:id/accept", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const proposal = await prisma.proposal.update({
+        where: { id },
+        data: { status: 'ACCEPTED' }
+      });
+      
+      if (proposal.dealId) {
+        await prisma.deal.update({
+          where: { id: proposal.dealId },
+          data: { status: 'WON' }
+        });
+      }
+      
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error accepting proposal:", error);
+      res.status(500).json({ error: "Failed to accept proposal" });
+    }
+  });
+
+  app.post("/api/proposals/:id/reject", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const proposal = await prisma.proposal.update({
+        where: { id },
+        data: { status: 'REJECTED' }
+      });
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      res.status(500).json({ error: "Failed to reject proposal" });
+    }
   });
 
   app.get("/api/propostas/:id/pdf", (req, res) => {
