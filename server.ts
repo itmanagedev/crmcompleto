@@ -312,9 +312,21 @@ async function startServer() {
     }
   });
 
+  app.get("/api/companies", async (req, res) => {
+    try {
+      const companies = await prisma.company.findMany({
+        orderBy: { name: 'asc' }
+      });
+      res.json(companies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ error: "Failed to fetch companies" });
+    }
+  });
+
   app.post("/api/proposals", async (req, res) => {
     try {
-      const { dealId, totalValue, observations, services, status, templateId, title } = req.body;
+      const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
       const linkHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
       const proposal = await prisma.proposal.create({
@@ -322,6 +334,10 @@ async function startServer() {
           title: title || "Proposta Comercial",
           dealId,
           templateId,
+          companyName,
+          contactName,
+          validUntil: validUntil ? new Date(validUntil) : null,
+          message,
           totalValue,
           observations,
           services,
@@ -420,10 +436,10 @@ async function startServer() {
       console.log(`Email sent: ${info.messageId}`);
       
       // Update status
-      const proposal = proposals.find(p => p.id === id);
-      if (proposal) {
-        proposal.status = 'sent';
-      }
+      await prisma.proposal.update({
+        where: { id },
+        data: { status: 'SENT' }
+      });
 
       res.json({ success: true, message: "Email sent successfully", messageId: info.messageId });
     } catch (error) {
@@ -432,35 +448,46 @@ async function startServer() {
     }
   });
 
-  app.patch("/api/propostas/:id/status", (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    const proposal = proposals.find(p => p.id === id);
-    if (proposal) {
-      proposal.status = status;
+  app.patch("/api/propostas/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      const proposal = await prisma.proposal.update({
+        where: { id },
+        data: { status }
+      });
       res.json(proposal);
-    } else {
-      res.status(404).json({ error: "Proposal not found" });
+    } catch (error) {
+      console.error("Error updating proposal status:", error);
+      res.status(500).json({ error: "Failed to update status" });
     }
   });
 
-  app.get("/api/propostas/:id/tracking", (req, res) => {
-    const { id } = req.params;
-    
-    // Update status to viewed
-    const proposal = proposals.find(p => p.id === id);
-    if (proposal && proposal.status === 'sent') {
-      proposal.status = 'viewed';
-    }
+  app.get("/api/propostas/:id/tracking", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Update status to viewed
+      const proposal = await prisma.proposal.findUnique({ where: { id } });
+      if (proposal && proposal.status === 'SENT') {
+        await prisma.proposal.update({
+          where: { id },
+          data: { status: 'VIEWED' }
+        });
+      }
 
-    // Return a 1x1 transparent pixel
-    const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
-    res.writeHead(200, {
-      'Content-Type': 'image/gif',
-      'Content-Length': pixel.length,
-    });
-    res.end(pixel);
+      // Return a 1x1 transparent pixel
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': pixel.length,
+      });
+      res.end(pixel);
+    } catch (error) {
+      console.error("Error tracking proposal:", error);
+      res.status(500).end();
+    }
   });
 
   // Vite middleware for development
