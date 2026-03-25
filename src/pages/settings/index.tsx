@@ -1,12 +1,13 @@
 import * as React from "react"
 import { NavLink, Outlet, useLocation } from "react-router-dom"
-import { User, Building2, KanbanSquare, TextCursorInput, Users, Link as LinkIcon } from "lucide-react"
+import { User, Building2, KanbanSquare, TextCursorInput, Users, Link as LinkIcon, FileText } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 
 const SETTINGS_NAV = [
   { name: "Perfil do Usuário", href: "/settings/profile", icon: User },
   { name: "Empresa", href: "/settings/company", icon: Building2 },
   { name: "Pipeline", href: "/settings/pipeline", icon: KanbanSquare },
+  { name: "Modelos de Proposta", href: "/settings/proposals", icon: FileText },
   { name: "Campos Personalizados", href: "/settings/custom-fields", icon: TextCursorInput },
   { name: "Usuários e Permissões", href: "/settings/users", icon: Users },
   { name: "Integrações", href: "/settings/integrations", icon: LinkIcon },

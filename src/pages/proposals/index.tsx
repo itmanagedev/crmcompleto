@@ -119,16 +119,36 @@ const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => (
 
 export function ProposalsList() {
   const navigate = useNavigate()
-  const [proposals, setProposals] = React.useState<Proposal[]>(MOCK_PROPOSALS)
+  const [proposals, setProposals] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
 
+  React.useEffect(() => {
+    const fetchProposals = async () => {
+      try {
+        const res = await fetch('/api/proposals')
+        if (res.ok) {
+          const data = await res.json()
+          setProposals(data)
+        }
+      } catch (error) {
+        console.error("Error fetching proposals:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProposals()
+  }, [])
+
   const filteredProposals = React.useMemo(() => {
     return proposals.filter(proposal => {
-      const matchesSearch = proposal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            proposal.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const title = proposal.deal?.title || 'Proposta sem título'
+      const client = proposal.deal?.contactName || 'Cliente não informado'
+      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            client.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             proposal.id.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === "all" || proposal.status === statusFilter
+      const matchesStatus = statusFilter === "all" || proposal.status.toLowerCase() === statusFilter.toLowerCase()
       return matchesSearch && matchesStatus
     })
   }, [proposals, searchQuery, statusFilter])
@@ -136,18 +156,17 @@ export function ProposalsList() {
   const handleAction = async (id: string, action: string) => {
     if (action === 'view') {
       const proposal = proposals.find(p => p.id === id)
-      if (proposal) {
-        const blob = await pdf(<SimpleProposalPDF proposal={proposal} />).toBlob()
-        const url = URL.createObjectURL(blob)
-        window.open(url, '_blank')
+      if (proposal && proposal.linkHash) {
+        window.open(`/p/${proposal.linkHash}`, '_blank')
       }
     } else if (action === 'accept') {
-      setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'accepted' } : p))
-    } else if (action === 'duplicate') {
-      const propToDuplicate = proposals.find(p => p.id === id)
-      if (propToDuplicate) {
-        const newProp = { ...propToDuplicate, id: `PROP-00${proposals.length + 1}`, status: 'draft' as const, date: new Date().toISOString().split('T')[0] }
-        setProposals([newProp, ...proposals])
+      try {
+        const res = await fetch(`/api/proposals/${id}/accept`, { method: 'POST' })
+        if (res.ok) {
+          setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'ACCEPTED' } : p))
+        }
+      } catch (error) {
+        console.error("Error accepting proposal:", error)
       }
     }
   }
@@ -219,28 +238,28 @@ export function ProposalsList() {
                   <tr key={proposal.id} className="bg-card hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-medium text-foreground">{proposal.title}</span>
+                        <span className="font-medium text-foreground">{proposal.deal?.title || 'Proposta sem título'}</span>
                         <span className="text-muted-foreground text-xs">{proposal.id}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-muted-foreground">{proposal.client}</span>
+                      <span className="text-muted-foreground">{proposal.deal?.contactName || 'Cliente não informado'}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-medium">{formatCurrency(proposal.value)}</span>
+                      <span className="font-medium">{formatCurrency(proposal.totalValue)}</span>
                     </td>
                     <td className="px-6 py-4">
-                      {getStatusBadge(proposal.status)}
+                      {getStatusBadge(proposal.status.toLowerCase())}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col space-y-1 text-xs">
                         <span className="flex items-center gap-1 text-muted-foreground">
                           <Calendar className="h-3 w-3" />
-                          Envio: {new Intl.DateTimeFormat('pt-BR').format(new Date(proposal.date))}
+                          Envio: {new Intl.DateTimeFormat('pt-BR').format(new Date(proposal.createdAt))}
                         </span>
                         <span className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          Válida: {new Intl.DateTimeFormat('pt-BR').format(new Date(proposal.validUntil))}
+                          Válida: {new Intl.DateTimeFormat('pt-BR').format(new Date(new Date(proposal.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000))}
                         </span>
                       </div>
                     </td>
@@ -253,15 +272,9 @@ export function ProposalsList() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'view')}>
-                            <FileText className="h-4 w-4 mr-2" /> Visualizar PDF
+                            <FileText className="h-4 w-4 mr-2" /> Visualizar Proposta
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'duplicate')}>
-                            <Copy className="h-4 w-4 mr-2" /> Duplicar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'resend')}>
-                            <Send className="h-4 w-4 mr-2" /> Reenviar
-                          </DropdownMenuItem>
-                          {proposal.status !== 'accepted' && (
+                          {proposal.status !== 'ACCEPTED' && (
                             <DropdownMenuItem className="cursor-pointer text-emerald-600" onClick={() => handleAction(proposal.id, 'accept')}>
                               <Check className="h-4 w-4 mr-2" /> Marcar como Aceita
                             </DropdownMenuItem>

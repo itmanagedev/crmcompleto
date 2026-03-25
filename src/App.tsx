@@ -14,6 +14,7 @@ import { CompaniesList } from "./pages/companies/index"
 import { CompanyProfile } from "./pages/companies/[id]"
 import { ProposalsList } from "./pages/proposals/index"
 import { NewProposal } from "./pages/proposals/new"
+import PublicProposalView from "./pages/proposals/public"
 import { Activities } from "./pages/activities"
 import { Reports } from "./pages/reports"
 import { Support } from "./pages/support"
@@ -31,6 +32,7 @@ import { PipelineSettings } from "./pages/settings/pipeline"
 import { CustomFieldsSettings } from "./pages/settings/custom-fields"
 import { UsersSettings } from "./pages/settings/users"
 import { IntegrationsSettings } from "./pages/settings/integrations"
+import { ProposalSettings } from "./pages/settings/proposals"
 
 export default function App() {
   return (
@@ -40,6 +42,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/p/:hash" element={<PublicProposalView />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
@@ -64,6 +67,7 @@ export default function App() {
               <Route path="custom-fields" element={<CustomFieldsSettings />} />
               <Route path="users" element={<UsersSettings />} />
               <Route path="integrations" element={<IntegrationsSettings />} />
+              <Route path="proposals" element={<ProposalSettings />} />
             </Route>
 
             <Route path="support" element={<Support />} />
