@@ -437,25 +437,31 @@ export function NewProposal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label>Empresa Cliente</Label>
-                <Select value={basicData.company} onValueChange={(v) => setBasicData({...basicData, company: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a empresa" /></SelectTrigger>
-                  <SelectContent>
-                    {companies.map(company => (
-                      <SelectItem key={company.id} value={company.name}>{company.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input 
+                  list="companies-list" 
+                  value={basicData.company} 
+                  onChange={(e) => setBasicData({...basicData, company: e.target.value})} 
+                  placeholder="Digite ou selecione a empresa" 
+                />
+                <datalist id="companies-list">
+                  {companies.map(company => (
+                    <option key={company.id} value={company.name} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label>Contato</Label>
-                <Select value={basicData.contact} onValueChange={(v) => setBasicData({...basicData, contact: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o contato" /></SelectTrigger>
-                  <SelectContent>
-                    {contacts.map(contact => (
-                      <SelectItem key={contact.id} value={contact.name}>{contact.name} {contact.email ? `(${contact.email})` : ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input 
+                  list="contacts-list" 
+                  value={basicData.contact} 
+                  onChange={(e) => setBasicData({...basicData, contact: e.target.value})} 
+                  placeholder="Digite ou selecione o contato" 
+                />
+                <datalist id="contacts-list">
+                  {contacts.map(contact => (
+                    <option key={contact.id} value={contact.name} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label>Vincular a um Deal (Opcional)</Label>
@@ -647,7 +653,11 @@ export function NewProposal() {
                   <div className="flex justify-between items-start mb-12 border-b pb-6" style={{ borderColor: visualData.primaryColor }}>
                     <div>
                       <h1 className="text-3xl font-bold" style={{ color: visualData.primaryColor }}>{visualData.title}</h1>
-                      <p className="text-sm text-gray-500 mt-2">Para: {basicData.company || 'Empresa Cliente'}</p>
+                      <p className="text-sm text-gray-500 mt-2 font-semibold">Para: {basicData.company || 'Empresa Cliente'}</p>
+                      <p className="text-sm text-gray-500">{basicData.contact || 'Contato não informado'}</p>
+                      {companies.find(c => c.name === basicData.company)?.cnpj && <p className="text-sm text-gray-500">CNPJ: {companies.find(c => c.name === basicData.company)?.cnpj}</p>}
+                      {contacts.find(c => c.name === basicData.contact)?.email && <p className="text-sm text-gray-500">Email: {contacts.find(c => c.name === basicData.contact)?.email}</p>}
+                      {contacts.find(c => c.name === basicData.contact)?.phone && <p className="text-sm text-gray-500">Telefone: {contacts.find(c => c.name === basicData.contact)?.phone}</p>}
                     </div>
                     <div className="text-right text-sm text-gray-500">
                       <p>Data: {new Date().toLocaleDateString('pt-BR')}</p>
@@ -722,7 +732,14 @@ export function NewProposal() {
                     
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                        <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => {
+                          setEmailData({
+                            ...emailData,
+                            to: contacts.find(c => c.name === basicData.contact)?.email || '',
+                            subject: `Proposta Comercial - ${basicData.company || 'Cliente'} - ${new Date().toLocaleDateString('pt-BR')}`,
+                            message: `Olá ${basicData.contact ? basicData.contact.split(' ')[0] : 'Cliente'},\n\nSegue em anexo nossa proposta comercial no valor de R$ ${total.toFixed(2)}.\n\nFico à disposição para dúvidas.\n\nAtenciosamente,\nEquipe de Vendas`
+                          });
+                        }}>
                           <Mail className="h-4 w-4" /> Enviar por E-mail
                         </Button>
                       </DialogTrigger>
@@ -735,7 +752,7 @@ export function NewProposal() {
                           <div className="space-y-2">
                             <Label>Para</Label>
                             <Input 
-                              value={emailData.to || contacts.find(c => c.name === basicData.contact)?.email || ''} 
+                              value={emailData.to || ''} 
                               onChange={(e) => setEmailData({...emailData, to: e.target.value})} 
                             />
                           </div>
@@ -743,14 +760,14 @@ export function NewProposal() {
                             <Label>CC (Opcional)</Label>
                             <Input 
                               placeholder="copia@empresa.com" 
-                              value={emailData.cc} 
+                              value={emailData.cc || ''} 
                               onChange={(e) => setEmailData({...emailData, cc: e.target.value})} 
                             />
                           </div>
                           <div className="space-y-2">
                             <Label>Assunto</Label>
                             <Input 
-                              value={emailData.subject || `Proposta Comercial - ${basicData.company || 'Cliente'} - ${new Date().toLocaleDateString('pt-BR')}`} 
+                              value={emailData.subject || ''} 
                               onChange={(e) => setEmailData({...emailData, subject: e.target.value})} 
                             />
                           </div>
@@ -758,7 +775,7 @@ export function NewProposal() {
                             <Label>Mensagem</Label>
                             <textarea 
                               className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              value={emailData.message || `Olá ${basicData.contact ? basicData.contact.split(' ')[0] : 'Cliente'},\n\nSegue em anexo nossa proposta comercial no valor de R$ ${total.toFixed(2)}.\n\nFico à disposição para dúvidas.\n\nAtenciosamente,\nEquipe de Vendas`}
+                              value={emailData.message || ''}
                               onChange={(e) => setEmailData({...emailData, message: e.target.value})}
                             />
                           </div>
@@ -780,7 +797,7 @@ export function NewProposal() {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                   title: visualData.title,
-                                  templateId: visualData.template,
+                                  templateId: visualData.template === 'modern' ? null : visualData.template,
                                   dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
                                   companyName: basicData.company,
                                   contactName: basicData.contact,
@@ -800,9 +817,9 @@ export function NewProposal() {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
-                                    to: emailData.to || contacts.find(c => c.name === basicData.contact)?.email || 'cliente@exemplo.com',
-                                    subject: emailData.subject || `Proposta Comercial - ${basicData.company || 'Cliente'} - ${new Date().toLocaleDateString('pt-BR')}`,
-                                    message: emailData.message || `Olá ${basicData.contact ? basicData.contact.split(' ')[0] : 'Cliente'},\n\nSegue em anexo nossa proposta comercial no valor de R$ ${total.toFixed(2)}.\n\nFico à disposição para dúvidas.\n\nAtenciosamente,\nEquipe de Vendas`
+                                    to: emailData.to || 'cliente@exemplo.com',
+                                    subject: emailData.subject,
+                                    message: emailData.message
                                   })
                                 })
                                 
@@ -811,7 +828,7 @@ export function NewProposal() {
                                 } else {
                                   alert('Proposta salva, mas houve um erro ao enviar o e-mail.')
                                 }
-                                navigate('/pipeline')
+                                navigate('/proposals')
                               } else {
                                 alert('Erro ao salvar proposta')
                               }
@@ -832,7 +849,7 @@ export function NewProposal() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               title: visualData.title,
-                              templateId: visualData.template,
+                              templateId: visualData.template === 'modern' ? null : visualData.template,
                               dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
                               companyName: basicData.company,
                               contactName: basicData.contact,
@@ -846,7 +863,7 @@ export function NewProposal() {
                           })
                           if (res.ok) {
                             alert('Proposta salva como rascunho!')
-                            navigate('/pipeline')
+                            navigate('/proposals')
                           } else {
                             alert('Erro ao salvar rascunho')
                           }
@@ -925,7 +942,7 @@ export function NewProposal() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   title: visualData.title,
-                  templateId: visualData.template,
+                  templateId: visualData.template === 'modern' ? null : visualData.template,
                   dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
                   companyName: basicData.company,
                   contactName: basicData.contact,
@@ -939,7 +956,7 @@ export function NewProposal() {
               })
               if (res.ok) {
                 alert('Proposta salva como rascunho!')
-                navigate('/pipeline')
+                navigate('/proposals')
               } else {
                 alert('Erro ao salvar rascunho')
               }

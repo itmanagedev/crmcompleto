@@ -312,42 +312,6 @@ async function startServer() {
     }
   });
 
-  app.get("/api/companies", async (req, res) => {
-    try {
-      const companies = await prisma.company.findMany({
-        orderBy: { name: 'asc' }
-      });
-      res.json(companies);
-    } catch (error) {
-      console.error("Error fetching companies:", error);
-      res.status(500).json({ error: "Failed to fetch companies" });
-    }
-  });
-
-  app.get("/api/contacts", async (req, res) => {
-    try {
-      const contacts = await prisma.contact.findMany({
-        orderBy: { name: 'asc' }
-      });
-      res.json(contacts);
-    } catch (error) {
-      console.error("Error fetching contacts:", error);
-      res.status(500).json({ error: "Failed to fetch contacts" });
-    }
-  });
-
-  app.get("/api/deals", async (req, res) => {
-    try {
-      const deals = await prisma.deal.findMany({
-        orderBy: { title: 'asc' }
-      });
-      res.json(deals);
-    } catch (error) {
-      console.error("Error fetching deals:", error);
-      res.status(500).json({ error: "Failed to fetch deals" });
-    }
-  });
-
   app.post("/api/proposals", async (req, res) => {
     try {
       const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
@@ -441,23 +405,26 @@ async function startServer() {
     
     try {
       // Mock email sending with Nodemailer
-      const info = await transporter.sendMail({
-        from: '"CRM Pro" <crm@example.com>',
-        to,
-        subject,
-        html: `
-          <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-            <h2 style="color: #2563eb;">Proposta Comercial</h2>
-            <p style="white-space: pre-wrap; color: #374151;">${message}</p>
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <a href="http://localhost:3000/api/propostas/${id}/pdf" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Visualizar Proposta em PDF</a>
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const info = await transporter.sendMail({
+          from: '"CRM Pro" <crm@example.com>',
+          to,
+          subject,
+          html: `
+            <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+              <h2 style="color: #2563eb;">Proposta Comercial</h2>
+              <p style="white-space: pre-wrap; color: #374151;">${message}</p>
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <a href="${process.env.APP_URL || 'http://localhost:3000'}/api/propostas/${id}/pdf" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Visualizar Proposta em PDF</a>
+              </div>
+              <img src="${process.env.APP_URL || 'http://localhost:3000'}/api/propostas/${id}/tracking" width="1" height="1" style="display:none;" />
             </div>
-            <img src="http://localhost:3000/api/propostas/${id}/tracking" width="1" height="1" style="display:none;" />
-          </div>
-        `,
-      });
-      
-      console.log(`Email sent: ${info.messageId}`);
+          `,
+        });
+        console.log(`Email sent: ${info.messageId}`);
+      } else {
+        console.log(`Mock email sent to ${to} (SMTP not configured)`);
+      }
       
       // Update status
       await prisma.proposal.update({
@@ -465,7 +432,7 @@ async function startServer() {
         data: { status: 'SENT' }
       });
 
-      res.json({ success: true, message: "Email sent successfully", messageId: info.messageId });
+      res.json({ success: true, message: "Email sent successfully" });
     } catch (error) {
       console.error("Error sending email:", error);
       res.status(500).json({ error: "Failed to send email" });

@@ -12,22 +12,24 @@ import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer
 interface Proposal {
   id: string
   title: string
-  client: string
-  value: number
-  status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
-  date: string
-  validUntil: string
-  owner: string
+  dealId?: string
+  templateId?: string
+  companyName?: string
+  contactName?: string
+  validUntil?: string
+  message?: string
+  status: string
+  linkHash: string
+  observations?: string
+  services?: any
+  totalValue: number
+  createdAt: string
+  updatedAt: string
+  deal?: any
+  template?: any
 }
 
-const MOCK_PROPOSALS: Proposal[] = [
-  { id: 'PROP-001', title: 'Licenciamento Anual Enterprise', client: 'TechCorp Solutions', value: 125000, status: 'sent', date: '2026-03-15', validUntil: '2026-04-15', owner: 'Ana Silva' },
-  { id: 'PROP-002', title: 'Consultoria de Implantação', client: 'Global Industries', value: 85000, status: 'accepted', date: '2026-03-10', validUntil: '2026-04-10', owner: 'Carlos Mendes' },
-  { id: 'PROP-003', title: 'Upgrade de Servidores', client: 'Inova Sistemas', value: 45000, status: 'draft', date: '2026-03-18', validUntil: '2026-04-18', owner: 'Mariana Costa' },
-  { id: 'PROP-004', title: 'Auditoria de Segurança', client: 'Alpha Finance', value: 210000, status: 'rejected', date: '2026-02-28', validUntil: '2026-03-28', owner: 'Roberto Alves' },
-  { id: 'PROP-005', title: 'Treinamento de Equipe', client: 'Beta Corp', value: 35000, status: 'viewed', date: '2026-03-16', validUntil: '2026-04-16', owner: 'Ana Silva' },
-  { id: 'PROP-006', title: 'Suporte Técnico 24/7', client: 'Gama Logistics', value: 15000, status: 'expired', date: '2026-01-15', validUntil: '2026-02-15', owner: 'Carlos Mendes' },
-]
+
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -80,11 +82,11 @@ const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => (
       <View style={pdfStyles.header}>
         <View>
           <Text style={pdfStyles.title}>{proposal.title}</Text>
-          <Text style={pdfStyles.subtitle}>Para: {proposal.client}</Text>
+          <Text style={pdfStyles.subtitle}>Para: {proposal.companyName || 'Cliente não informado'}</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text>Data: {new Date(proposal.date).toLocaleDateString('pt-BR')}</Text>
-          <Text>Validade: {new Date(proposal.validUntil).toLocaleDateString('pt-BR')}</Text>
+          <Text>Data: {new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</Text>
+          <Text>Validade: {proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : new Date(new Date(proposal.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}</Text>
         </View>
       </View>
 
@@ -99,14 +101,14 @@ const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => (
         </View>
         <View style={pdfStyles.tableRow}>
           <View style={pdfStyles.tableCol}><Text>{proposal.title}</Text></View>
-          <View style={pdfStyles.tableColValue}><Text>R$ {proposal.value.toFixed(2)}</Text></View>
+          <View style={pdfStyles.tableColValue}><Text>R$ {(proposal.totalValue || 0).toFixed(2)}</Text></View>
         </View>
       </View>
 
       <View style={pdfStyles.totals}>
         <View style={pdfStyles.totalRow}>
           <Text style={pdfStyles.totalLabel}>Total Final:</Text>
-          <Text style={{ ...pdfStyles.totalValue, ...pdfStyles.finalTotal }}>R$ {proposal.value.toFixed(2)}</Text>
+          <Text style={{ ...pdfStyles.totalValue, ...pdfStyles.finalTotal }}>R$ {(proposal.totalValue || 0).toFixed(2)}</Text>
         </View>
       </View>
 
@@ -143,8 +145,8 @@ export function ProposalsList() {
 
   const filteredProposals = React.useMemo(() => {
     return proposals.filter(proposal => {
-      const title = proposal.deal?.title || 'Proposta sem título'
-      const client = proposal.deal?.contactName || 'Cliente não informado'
+      const title = proposal.title || 'Proposta sem título'
+      const client = proposal.companyName || 'Cliente não informado'
       const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             client.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             proposal.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -238,12 +240,12 @@ export function ProposalsList() {
                   <tr key={proposal.id} className="bg-card hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-medium text-foreground">{proposal.deal?.title || 'Proposta sem título'}</span>
+                        <span className="font-medium text-foreground">{proposal.title || 'Proposta sem título'}</span>
                         <span className="text-muted-foreground text-xs">{proposal.id}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-muted-foreground">{proposal.deal?.contactName || 'Cliente não informado'}</span>
+                      <span className="text-muted-foreground">{proposal.companyName || 'Cliente não informado'}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-medium">{formatCurrency(proposal.totalValue)}</span>
@@ -259,7 +261,7 @@ export function ProposalsList() {
                         </span>
                         <span className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          Válida: {new Intl.DateTimeFormat('pt-BR').format(new Date(new Date(proposal.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000))}
+                          Válida: {proposal.validUntil ? new Intl.DateTimeFormat('pt-BR').format(new Date(proposal.validUntil)) : new Intl.DateTimeFormat('pt-BR').format(new Date(new Date(proposal.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000))}
                         </span>
                       </div>
                     </td>
