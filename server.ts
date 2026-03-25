@@ -324,6 +324,30 @@ async function startServer() {
     }
   });
 
+  app.get("/api/contacts", async (req, res) => {
+    try {
+      const contacts = await prisma.contact.findMany({
+        orderBy: { name: 'asc' }
+      });
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      res.status(500).json({ error: "Failed to fetch contacts" });
+    }
+  });
+
+  app.get("/api/deals", async (req, res) => {
+    try {
+      const deals = await prisma.deal.findMany({
+        orderBy: { title: 'asc' }
+      });
+      res.json(deals);
+    } catch (error) {
+      console.error("Error fetching deals:", error);
+      res.status(500).json({ error: "Failed to fetch deals" });
+    }
+  });
+
   app.post("/api/proposals", async (req, res) => {
     try {
       const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
