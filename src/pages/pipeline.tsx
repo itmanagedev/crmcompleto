@@ -320,7 +320,7 @@ const dealFormSchema = z.object({
 })
 
 export function Pipeline() {
-  const [deals, setDeals] = React.useState<Deal[]>(INITIAL_DEALS)
+  const [deals, setDeals] = React.useState<Deal[]>([])
   const [activeDeal, setActiveDeal] = React.useState<Deal | null>(null)
   const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false)
@@ -328,6 +328,40 @@ export function Pipeline() {
   const [dealToEdit, setDealToEdit] = React.useState<Deal | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [activeMobileStage, setActiveMobileStage] = React.useState<StageId>('prospeccao')
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    fetchDeals()
+  }, [])
+
+  const fetchDeals = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/deals')
+      if (res.ok) {
+        const data = await res.json()
+        // Map backend data to frontend Deal interface
+        const mappedDeals: Deal[] = data.map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          company: d.companyName || 'Empresa não informada',
+          companyAvatar: (d.companyName || 'E').substring(0, 2).toUpperCase(),
+          value: d.value || 0,
+          probability: d.probability || 0,
+          owner: { name: 'Usuário Atual', avatar: 'https://i.pravatar.cc/150?u=current' },
+          expectedCloseDate: d.expectedCloseDate || new Date().toISOString(),
+          daysInStage: 0,
+          stageId: d.stage || 'prospeccao',
+          activities: []
+        }))
+        setDeals(mappedDeals)
+      }
+    } catch (error) {
+      console.error('Failed to fetch deals:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -343,8 +377,8 @@ export function Pipeline() {
   // Filtered Deals
   const filteredDeals = React.useMemo(() => {
     return deals.filter(deal => 
-      deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deal.company.toLowerCase().includes(searchQuery.toLowerCase())
+      deal.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      deal.company?.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }, [deals, searchQuery])
 
@@ -412,7 +446,7 @@ export function Pipeline() {
     }
   }
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     setActiveDeal(null)
     const { active, over } = event
     if (!over) return
@@ -422,10 +456,28 @@ export function Pipeline() {
 
     if (activeId === overId) return
 
+    const activeIndex = deals.findIndex((t) => t.id === activeId)
+    const overIndex = deals.findIndex((t) => t.id === overId)
+    
+    let newStageId = deals[activeIndex].stageId
+    if (over.data.current?.type === 'Column') {
+      newStageId = over.id as StageId
+    } else if (over.data.current?.type === 'Deal') {
+      newStageId = deals[overIndex].stageId
+    }
+
+    // Update backend
+    try {
+      await fetch(`/api/deals/${activeId}/stage`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: newStageId })
+      })
+    } catch (error) {
+      console.error('Failed to update deal stage:', error)
+    }
+
     setDeals((deals) => {
-      const activeIndex = deals.findIndex((t) => t.id === activeId)
-      const overIndex = deals.findIndex((t) => t.id === overId)
-      
       if (overIndex !== -1) {
         return arrayMove(deals, activeIndex, overIndex)
       }
@@ -438,54 +490,106 @@ export function Pipeline() {
     setIsDetailsOpen(true)
   }
 
-  const handleMoveDeal = (dealId: string, newStageId: StageId) => {
-    setDeals(currentDeals => currentDeals.map(d => d.id === dealId ? { ...d, stageId: newStageId } : d))
-    if (selectedDeal?.id === dealId) {
-      setSelectedDeal(prev => prev ? { ...prev, stageId: newStageId } : null)
+  const handleMoveDeal = async (dealId: string, newStageId: StageId) => {
+    try {
+      await fetch(`/api/deals/${dealId}/stage`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: newStageId })
+      })
+      
+      setDeals(currentDeals => currentDeals.map(d => d.id === dealId ? { ...d, stageId: newStageId } : d))
+      if (selectedDeal?.id === dealId) {
+        setSelectedDeal(prev => prev ? { ...prev, stageId: newStageId } : null)
+      }
+    } catch (error) {
+      console.error('Failed to update deal stage:', error)
     }
   }
 
-  const handleSaveDeal = (values: DealFormValues) => {
-    if (dealToEdit) {
-      setDeals(currentDeals => currentDeals.map(d => 
-        d.id === dealToEdit.id 
-          ? { 
-              ...d, 
+  const handleSaveDeal = async (values: DealFormValues) => {
+    try {
+      if (dealToEdit) {
+        const res = await fetch(`/api/deals/${dealToEdit.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: values.title,
+            companyName: values.company,
+            value: values.value,
+            stage: values.stageId,
+            probability: values.probability,
+            expectedCloseDate: values.expectedCloseDate,
+          })
+        })
+        
+        if (res.ok) {
+          setDeals(currentDeals => currentDeals.map(d => 
+            d.id === dealToEdit.id 
+              ? { 
+                  ...d, 
+                  title: values.title,
+                  company: values.company,
+                  companyAvatar: values.company.substring(0, 2).toUpperCase(),
+                  value: values.value,
+                  stageId: values.stageId as StageId,
+                  probability: values.probability,
+                  expectedCloseDate: values.expectedCloseDate,
+                } 
+              : d
+          ))
+          if (selectedDeal?.id === dealToEdit.id) {
+            setSelectedDeal(prev => prev ? { 
+              ...prev, 
               title: values.title,
               company: values.company,
+              companyAvatar: values.company.substring(0, 2).toUpperCase(),
               value: values.value,
               stageId: values.stageId as StageId,
               probability: values.probability,
               expectedCloseDate: values.expectedCloseDate,
-            } 
-          : d
-      ))
-      if (selectedDeal?.id === dealToEdit.id) {
-        setSelectedDeal(prev => prev ? { 
-          ...prev, 
-          title: values.title,
-          company: values.company,
-          value: values.value,
-          stageId: values.stageId as StageId,
-          probability: values.probability,
-          expectedCloseDate: values.expectedCloseDate,
-        } : null)
+            } : null)
+          }
+        } else {
+          alert('Erro ao atualizar deal')
+        }
+      } else {
+        const res = await fetch('/api/deals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: values.title,
+            companyName: values.company,
+            value: values.value,
+            stage: values.stageId,
+            probability: values.probability,
+            expectedCloseDate: values.expectedCloseDate,
+          })
+        })
+        
+        if (res.ok) {
+          const created = await res.json()
+          const newDeal: Deal = {
+            id: created.id,
+            title: values.title,
+            company: values.company,
+            companyAvatar: values.company.substring(0, 2).toUpperCase(),
+            value: values.value,
+            probability: values.probability,
+            owner: { name: 'Usuário Atual', avatar: 'https://i.pravatar.cc/150?u=current' },
+            expectedCloseDate: values.expectedCloseDate,
+            daysInStage: 0,
+            stageId: values.stageId as StageId,
+            activities: [],
+          }
+          setDeals([...deals, newDeal])
+        } else {
+          alert('Erro ao criar deal')
+        }
       }
-    } else {
-      const newDeal: Deal = {
-        id: `deal-${Date.now()}`,
-        title: values.title,
-        company: values.company,
-        companyAvatar: values.company.substring(0, 2).toUpperCase(),
-        value: values.value,
-        probability: values.probability,
-        owner: { name: 'Usuário Atual', avatar: 'https://i.pravatar.cc/150?u=current' },
-        expectedCloseDate: values.expectedCloseDate,
-        daysInStage: 0,
-        stageId: values.stageId as StageId,
-        activities: [],
-      }
-      setDeals([...deals, newDeal])
+    } catch (error) {
+      console.error('Failed to save deal:', error)
+      alert('Erro ao salvar deal')
     }
     setIsDealFormOpen(false)
     setDealToEdit(null)

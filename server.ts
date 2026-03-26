@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   app.use(cors());
   app.use(express.json());
@@ -45,7 +45,10 @@ async function startServer() {
       const companies = await prisma.company.findMany({
         include: { _count: { select: { contacts: true, deals: true } } }
       });
-      res.json(companies);
+      res.json(companies.map(c => ({
+        ...c,
+        tags: JSON.parse(c.tags || "[]")
+      })));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch companies" });
     }
@@ -53,9 +56,16 @@ async function startServer() {
 
   app.post("/api/companies", async (req, res) => {
     try {
-      const company = await prisma.company.create({ data: req.body });
-      res.json(company);
+      const data = { ...req.body };
+      if (data.tags) data.tags = JSON.stringify(data.tags);
+      delete data.contactsCount;
+      delete data.dealsCount;
+      delete data.owner;
+      delete data.logo;
+      const company = await prisma.company.create({ data });
+      res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Failed to create company" });
     }
   });
@@ -66,7 +76,7 @@ async function startServer() {
         where: { id: req.params.id },
         include: { contacts: true, deals: true }
       });
-      if (company) res.json(company);
+      if (company) res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
       else res.status(404).json({ error: "Company not found" });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch company" });
@@ -75,12 +85,20 @@ async function startServer() {
 
   app.put("/api/companies/:id", async (req, res) => {
     try {
+      const data = { ...req.body };
+      if (data.tags) data.tags = JSON.stringify(data.tags);
+      delete data.id;
+      delete data.contactsCount;
+      delete data.dealsCount;
+      delete data.owner;
+      delete data.logo;
       const company = await prisma.company.update({
         where: { id: req.params.id },
-        data: req.body
+        data
       });
-      res.json(company);
+      res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Failed to update company" });
     }
   });
@@ -102,7 +120,11 @@ async function startServer() {
       const contacts = await prisma.contact.findMany({
         include: { company: true }
       });
-      res.json(contacts);
+      res.json(contacts.map(c => ({
+        ...c,
+        company: c.companyName || c.company?.name || '',
+        tags: JSON.parse(c.tags || "[]")
+      })));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch contacts" });
     }
@@ -110,10 +132,50 @@ async function startServer() {
 
   app.post("/api/contacts", async (req, res) => {
     try {
-      const contact = await prisma.contact.create({ data: req.body });
-      res.json(contact);
+      const data = { ...req.body };
+      if (data.tags) data.tags = JSON.stringify(data.tags);
+      if (data.company) {
+        data.companyName = data.company;
+        delete data.company;
+      }
+      delete data.lastContact;
+      delete data.owner;
+      const contact = await prisma.contact.create({ data });
+      res.json({ ...contact, company: contact.companyName, tags: JSON.parse(contact.tags || "[]") });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Failed to create contact" });
+    }
+  });
+
+  app.put("/api/contacts/:id", async (req, res) => {
+    try {
+      const data = { ...req.body };
+      if (data.tags) data.tags = JSON.stringify(data.tags);
+      if (data.company) {
+        data.companyName = data.company;
+        delete data.company;
+      }
+      delete data.id;
+      delete data.lastContact;
+      delete data.owner;
+      const contact = await prisma.contact.update({
+        where: { id: req.params.id },
+        data
+      });
+      res.json({ ...contact, company: contact.companyName, tags: JSON.parse(contact.tags || "[]") });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to update contact" });
+    }
+  });
+
+  app.delete("/api/contacts/:id", async (req, res) => {
+    try {
+      await prisma.contact.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete contact" });
     }
   });
 
@@ -133,10 +195,42 @@ async function startServer() {
 
   app.post("/api/deals", async (req, res) => {
     try {
-      const deal = await prisma.deal.create({ data: req.body });
+      const data = { ...req.body };
+      if (data.expectedCloseDate) {
+        data.expectedCloseDate = new Date(data.expectedCloseDate);
+      }
+      const deal = await prisma.deal.create({ data });
       res.json(deal);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: "Failed to create deal" });
+    }
+  });
+
+  app.put("/api/deals/:id", async (req, res) => {
+    try {
+      const data = { ...req.body };
+      if (data.expectedCloseDate) {
+        data.expectedCloseDate = new Date(data.expectedCloseDate);
+      }
+      delete data.id;
+      const deal = await prisma.deal.update({
+        where: { id: req.params.id },
+        data
+      });
+      res.json(deal);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to update deal" });
+    }
+  });
+
+  app.delete("/api/deals/:id", async (req, res) => {
+    try {
+      await prisma.deal.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete deal" });
     }
   });
 

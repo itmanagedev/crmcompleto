@@ -23,9 +23,29 @@ export function ContactsList() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [selectedContacts, setSelectedContacts] = React.useState<Set<string>>(new Set())
-  const [contacts, setContacts] = React.useState<Contact[]>(MOCK_CONTACTS)
+  const [contacts, setContacts] = React.useState<Contact[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingContact, setEditingContact] = React.useState<Contact | null>(null)
+
+  React.useEffect(() => {
+    fetchContacts()
+  }, [])
+
+  const fetchContacts = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/contacts')
+      if (res.ok) {
+        const data = await res.json()
+        setContacts(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch contacts:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Debounce search
   React.useEffect(() => {
@@ -35,9 +55,9 @@ export function ContactsList() {
 
   const filteredContacts = React.useMemo(() => {
     return contacts.filter(contact => 
-      contact.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      contact.company.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      contact.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+      contact.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      contact.company?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
     )
   }, [debouncedSearch, contacts])
 
@@ -63,26 +83,61 @@ export function ContactsList() {
     setIsDialogOpen(true)
   }
 
-  const handleSaveContact = (contactData: Partial<Contact>) => {
-    if (editingContact) {
-      setContacts(contacts.map(c => c.id === editingContact.id ? { ...c, ...contactData } as Contact : c))
-    } else {
-      const newContact: Contact = {
-        ...contactData as Contact,
-        id: Math.random().toString(36).substr(2, 9),
-        lastContact: new Date().toISOString(),
-        tags: [],
-        owner: 'Usuário Atual'
+  const handleSaveContact = async (contactData: Partial<Contact>) => {
+    try {
+      if (editingContact) {
+        const res = await fetch(`/api/contacts/${editingContact.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(contactData)
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setContacts(contacts.map(c => c.id === editingContact.id ? { ...c, ...updated } : c))
+        } else {
+          alert('Erro ao atualizar contato')
+        }
+      } else {
+        const res = await fetch('/api/contacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...contactData,
+            lastContact: new Date().toISOString(),
+            tags: [],
+            owner: 'Usuário Atual'
+          })
+        })
+        if (res.ok) {
+          const created = await res.json()
+          setContacts([created, ...contacts])
+        } else {
+          alert('Erro ao criar contato')
+        }
       }
-      setContacts([newContact, ...contacts])
+    } catch (error) {
+      console.error('Failed to save contact:', error)
+      alert('Erro ao salvar contato')
     }
   }
 
-  const handleDeleteContact = (id: string) => {
-    setContacts(contacts.filter(c => c.id !== id))
-    const newSelection = new Set(selectedContacts)
-    newSelection.delete(id)
-    setSelectedContacts(newSelection)
+  const handleDeleteContact = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este contato?')) return
+    
+    try {
+      const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setContacts(contacts.filter(c => c.id !== id))
+        const newSelection = new Set(selectedContacts)
+        newSelection.delete(id)
+        setSelectedContacts(newSelection)
+      } else {
+        alert('Erro ao excluir contato')
+      }
+    } catch (error) {
+      console.error('Failed to delete contact:', error)
+      alert('Erro ao excluir contato')
+    }
   }
 
   return (

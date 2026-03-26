@@ -18,14 +18,38 @@ const MOCK_COMPANIES: Company[] = [
 
 export function CompaniesList() {
   const navigate = useNavigate()
-  const [companies, setCompanies] = React.useState<Company[]>(MOCK_COMPANIES)
+  const [companies, setCompanies] = React.useState<Company[]>([])
   const [viewMode, setViewMode] = React.useState<'table' | 'grid'>('table')
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [selectedCompanies, setSelectedCompanies] = React.useState<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = React.useState(true)
   
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null)
+
+  React.useEffect(() => {
+    fetchCompanies()
+  }, [])
+
+  const fetchCompanies = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/companies')
+      if (res.ok) {
+        const data = await res.json()
+        setCompanies(data.map((c: any) => ({
+          ...c,
+          contactsCount: c._count?.contacts || 0,
+          dealsCount: c._count?.deals || 0
+        })))
+      }
+    } catch (error) {
+      console.error('Failed to fetch companies:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Debounce search
   React.useEffect(() => {
@@ -35,9 +59,9 @@ export function CompaniesList() {
 
   const filteredCompanies = React.useMemo(() => {
     return companies.filter(company => 
-      company.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      company.industry.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      company.city.toLowerCase().includes(debouncedSearch.toLowerCase())
+      company.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      company.industry?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      company.city?.toLowerCase().includes(debouncedSearch.toLowerCase())
     )
   }, [companies, debouncedSearch])
 
@@ -63,30 +87,52 @@ export function CompaniesList() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id: string) => {
-    setCompanies(prev => prev.filter(c => c.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta empresa?')) return
+    
+    try {
+      const res = await fetch(`/api/companies/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setCompanies(prev => prev.filter(c => c.id !== id))
+      } else {
+        alert('Erro ao excluir empresa')
+      }
+    } catch (error) {
+      console.error('Failed to delete company:', error)
+      alert('Erro ao excluir empresa')
+    }
   }
 
-  const handleSave = (companyData: Partial<Company>) => {
-    if (editingCompany) {
-      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...companyData } as Company : c))
-    } else {
-      const newCompany: Company = {
-        id: `${companies.length + 1}`,
-        name: companyData.name || 'Nova Empresa',
-        industry: companyData.industry || 'Não informado',
-        size: companyData.size || 'Não informado',
-        revenue: companyData.revenue || 'Não informado',
-        city: companyData.city || 'Não informado',
-        state: companyData.state || 'Não informado',
-        website: companyData.website || 'Não informado',
-        contactsCount: companyData.contactsCount || 0,
-        dealsCount: companyData.dealsCount || 0,
-        status: companyData.status || 'prospect',
-        tags: companyData.tags || [],
-        owner: companyData.owner || 'Não atribuído'
+  const handleSave = async (companyData: Partial<Company>) => {
+    try {
+      if (editingCompany) {
+        const res = await fetch(`/api/companies/${editingCompany.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(companyData)
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...updated, contactsCount: c.contactsCount, dealsCount: c.dealsCount } : c))
+        } else {
+          alert('Erro ao atualizar empresa')
+        }
+      } else {
+        const res = await fetch('/api/companies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(companyData)
+        })
+        if (res.ok) {
+          const created = await res.json()
+          setCompanies([{ ...created, contactsCount: 0, dealsCount: 0 }, ...companies])
+        } else {
+          alert('Erro ao criar empresa')
+        }
       }
-      setCompanies([newCompany, ...companies])
+    } catch (error) {
+      console.error('Failed to save company:', error)
+      alert('Erro ao salvar empresa')
     }
   }
 
