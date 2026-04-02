@@ -45,14 +45,6 @@ import {
   SelectValue,
 } from "@/src/components/ui/select"
 
-import { 
-  kpiData, 
-  pipelineData, 
-  revenueData, 
-  dealsAtRisk, 
-  topReps, 
-  latestProposals 
-} from "@/src/lib/mock-data"
 import { cn } from "@/src/lib/utils"
 import { useActivitiesStore, ActivityType } from "@/src/store/activities"
 
@@ -62,15 +54,39 @@ export function Dashboard() {
   const [period, setPeriod] = React.useState("30d")
   const { getTodayActivities, updateActivity, openModal } = useActivitiesStore()
 
+  const [dashboardData, setDashboardData] = React.useState<any>({
+    kpiData: {
+      openDeals: { value: 0, trend: 0, history: [] },
+      expectedRevenue: { value: 0, trend: 0, history: [] },
+      conversionRate: { value: 0, trend: 0, history: [] },
+      pendingActivities: { value: 0, trend: 0, history: [] }
+    },
+    pipelineData: [],
+    dealsAtRisk: [],
+    latestProposals: [],
+    topReps: [],
+    revenueData: []
+  });
+
   const todayActivities = getTodayActivities()
 
   React.useEffect(() => {
-    // Simulate API call
-    setIsLoading(true)
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    return () => clearTimeout(timer)
+    const fetchDashboardData = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch('/api/dashboard')
+        if (response.ok) {
+          const data = await response.json()
+          setDashboardData(data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchDashboardData()
   }, [period])
 
   const formatCurrency = (value: number) => {
@@ -93,7 +109,7 @@ export function Dashboard() {
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'sent': return <Badge variant="info">Enviada</Badge>
       case 'accepted': return <Badge variant="success">Aceita</Badge>
       case 'rejected': return <Badge variant="destructive">Recusada</Badge>
@@ -101,6 +117,8 @@ export function Dashboard() {
       default: return <Badge variant="outline">{status}</Badge>
     }
   }
+
+  const { kpiData, pipelineData, revenueData, dealsAtRisk, topReps, latestProposals } = dashboardData;
 
   return (
     <div className="space-y-6">

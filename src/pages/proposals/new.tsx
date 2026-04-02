@@ -826,7 +826,8 @@ export function NewProposal() {
                                 if (emailRes.ok) {
                                   alert('Proposta salva e e-mail enviado com sucesso!')
                                 } else {
-                                  alert('Proposta salva, mas houve um erro ao enviar o e-mail.')
+                                  const errorData = await emailRes.json().catch(() => ({}));
+                                  alert(`Proposta salva, mas houve um erro ao enviar o e-mail: ${errorData.error || 'Erro desconhecido'}`)
                                 }
                                 navigate('/proposals')
                               } else {

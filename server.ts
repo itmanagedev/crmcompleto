@@ -18,13 +18,18 @@ async function startServer() {
   app.use(express.json());
 
   // Nodemailer setup
+  const smtpPort = parseInt(process.env.SMTP_PORT || "587");
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.ethereal.email",
-    port: parseInt(process.env.SMTP_PORT || "587"),
+    port: smtpPort,
+    secure: smtpPort === 465, // true for 465, false for other ports
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 
   // API Routes
@@ -176,6 +181,127 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete contact" });
+    }
+  });
+
+  // ==========================================
+  // API: Dashboard
+  // ==========================================
+  app.get("/api/dashboard", async (req, res) => {
+    try {
+      // open deals count
+      const openDealsCount = await prisma.deal.count({
+        where: { status: 'open' }
+      });
+      
+      // expected revenue (sum of open deals values)
+      const openDeals = await prisma.deal.findMany({
+        where: { status: 'open' }
+      });
+      const expectedRevenue = openDeals.reduce((sum, deal) => sum + deal.value, 0);
+
+      // conversion rate (won deals / total deals)
+      const totalDeals = await prisma.deal.count();
+      const wonDeals = await prisma.deal.count({
+        where: { status: 'won' }
+      });
+      const conversionRate = totalDeals > 0 ? (wonDeals / totalDeals) * 100 : 0;
+
+      // pending activities
+      const pendingActivitiesCount = await prisma.activity.count({
+        where: { status: 'todo' }
+      });
+
+      // pipeline data (deals by stage)
+      const pipelineGroups = await prisma.deal.groupBy({
+        by: ['stage'],
+        _count: { id: true },
+        _sum: { value: true },
+        where: { status: 'open' }
+      });
+      const pipelineData = pipelineGroups.map(g => ({
+        stage: g.stage,
+        deals: g._count.id,
+        value: g._sum.value || 0
+      }));
+
+      // deals at risk (open deals with no recent activities)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const dealsAtRiskRaw = await prisma.deal.findMany({
+        where: { 
+          status: 'open',
+          updatedAt: { lt: sevenDaysAgo }
+        },
+        include: { company: true, owner: true },
+        take: 5,
+        orderBy: { updatedAt: 'asc' }
+      });
+      
+      const dealsAtRisk = dealsAtRiskRaw.map(d => ({
+        id: d.id,
+        company: d.company?.name || d.companyName || 'Unknown',
+        dealName: d.title,
+        value: d.value,
+        daysIdle: Math.floor((new Date().getTime() - new Date(d.updatedAt).getTime()) / (1000 * 3600 * 24)),
+        owner: d.owner?.name || 'Unassigned',
+        avatar: (d.company?.name || d.companyName || 'U').substring(0, 2).toUpperCase()
+      }));
+
+      // latest proposals
+      const latestProposalsRaw = await prisma.proposal.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' }
+      });
+      const latestProposals = latestProposalsRaw.map(p => ({
+        id: p.id,
+        company: p.companyName || 'Unknown',
+        value: p.totalValue,
+        date: p.createdAt,
+        status: p.status
+      }));
+
+      // top reps
+      const topRepsRaw = await prisma.user.findMany({
+        include: {
+          deals: {
+            where: { status: 'won' }
+          }
+        },
+        take: 5
+      });
+      const topReps = topRepsRaw.map(u => {
+        const revenue = u.deals.reduce((sum, d) => sum + d.value, 0);
+        return {
+          id: u.id,
+          name: u.name || 'Unknown',
+          avatar: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}`,
+          deals: u.deals.length,
+          revenue: revenue,
+          progress: revenue > 0 ? 100 : 0
+        };
+      }).sort((a, b) => b.revenue - a.revenue);
+
+      // revenue data (last 6 months)
+      const months = ['Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar'];
+      const revenueData = months.map(m => ({ month: m, revenue: 0, target: 0 }));
+
+      res.json({
+        kpiData: {
+          openDeals: { value: openDealsCount, trend: 0, history: [] },
+          expectedRevenue: { value: expectedRevenue, trend: 0, history: [] },
+          conversionRate: { value: parseFloat(conversionRate.toFixed(1)), trend: 0, history: [] },
+          pendingActivities: { value: pendingActivitiesCount, trend: 0, history: [] }
+        },
+        pipelineData,
+        dealsAtRisk,
+        latestProposals,
+        topReps,
+        revenueData
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
 
@@ -499,9 +625,9 @@ async function startServer() {
     
     try {
       // Mock email sending with Nodemailer
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_USER !== 'seu_usuario') {
         const info = await transporter.sendMail({
-          from: '"CRM Pro" <crm@example.com>',
+          from: process.env.SMTP_FROM || '"CRM Pro" <crm@example.com>',
           to,
           subject,
           html: `
@@ -517,7 +643,7 @@ async function startServer() {
         });
         console.log(`Email sent: ${info.messageId}`);
       } else {
-        console.log(`Mock email sent to ${to} (SMTP not configured)`);
+        console.log(`Mock email sent to ${to} (SMTP not configured or using placeholder credentials)`);
       }
       
       // Update status
@@ -527,9 +653,9 @@ async function startServer() {
       });
 
       res.json({ success: true, message: "Email sent successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending email:", error);
-      res.status(500).json({ error: "Failed to send email" });
+      res.status(500).json({ error: error.message || "Failed to send email" });
     }
   });
 
