@@ -17,6 +17,7 @@ import { NewProposal } from "./pages/proposals/new"
 import PublicProposalView from "./pages/proposals/public"
 import { Activities } from "./pages/activities"
 import { Reports } from "./pages/reports"
+import { ServicesCatalog } from "./pages/services"
 import { Support } from "./pages/support"
 
 // Auth Pages
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="proposals/new" element={<NewProposal />} />
             <Route path="activities" element={<Activities />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="services" element={<ServicesCatalog />} />
             
             {/* Settings */}
             <Route path="settings" element={<SettingsLayout />}>

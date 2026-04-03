@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Check, ChevronRight, Save, FileText, Send, Plus, Trash2, GripVertical, Download, Mail } from "lucide-react"
+import { Check, ChevronRight, Save, FileText, Send, Plus, Trash2, GripVertical, Download, Mail, Layers } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { Label } from "@/src/components/ui/label"
@@ -249,6 +249,15 @@ export function NewProposal() {
   
   const [currentStep, setCurrentStep] = React.useState(1)
   const [isSaving, setIsSaving] = React.useState(false)
+  const [isCatalogDialogOpen, setIsCatalogDialogOpen] = React.useState(false)
+  const [catalogServices, setCatalogServices] = React.useState<any[]>([])
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('crm_services')
+    if (saved) {
+      setCatalogServices(JSON.parse(saved))
+    }
+  }, [])
   
   // Form State
   const [basicData, setBasicData] = React.useState({
@@ -613,7 +622,10 @@ export function NewProposal() {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Itens da Proposta</h3>
-              <Button onClick={addItem} size="sm" variant="outline"><Plus className="h-4 w-4 mr-2" /> Adicionar Item</Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setIsCatalogDialogOpen(true)} size="sm" variant="outline"><Layers className="h-4 w-4 mr-2" /> Importar do Catálogo</Button>
+                <Button onClick={addItem} size="sm" variant="outline"><Plus className="h-4 w-4 mr-2" /> Adicionar Item</Button>
+              </div>
             </div>
             
             <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground bg-muted/50 rounded-t-lg border-b">
@@ -970,6 +982,67 @@ export function NewProposal() {
           )}
         </div>
       </div>
+
+      {/* Catalog Dialog */}
+      <Dialog open={isCatalogDialogOpen} onOpenChange={setIsCatalogDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Importar do Catálogo de Serviços</DialogTitle>
+            <DialogDescription>
+              Selecione um serviço do catálogo para adicionar à proposta. Os produtos vinculados serão adicionados automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            {catalogServices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum serviço encontrado no catálogo. Vá até a tela de Serviços para cadastrar.
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {catalogServices.map((service: any) => (
+                  <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div>
+                      <h4 className="font-semibold">{service.name}</h4>
+                      <p className="text-sm text-muted-foreground">{service.description}</p>
+                      <div className="text-sm font-medium text-primary mt-1">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                      </div>
+                      {service.products && service.products.length > 0 && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Inclui {service.products.length} produto(s)
+                        </div>
+                      )}
+                    </div>
+                    <Button onClick={() => {
+                      const newItem: ProposalItem = {
+                        id: Math.random().toString(36).substr(2, 9),
+                        description: service.name,
+                        quantity: 1,
+                        unit: 'un',
+                        unitPrice: service.price,
+                        discount: 0,
+                        subItems: service.products?.map((p: any) => ({
+                          id: Math.random().toString(36).substr(2, 9),
+                          description: p.name,
+                          quantity: 1,
+                          unit: 'un'
+                        })) || []
+                      }
+                      setItems([...items, newItem])
+                      setIsCatalogDialogOpen(false)
+                    }}>
+                      Adicionar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooterUI>
+            <Button variant="outline" onClick={() => setIsCatalogDialogOpen(false)}>Fechar</Button>
+          </DialogFooterUI>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

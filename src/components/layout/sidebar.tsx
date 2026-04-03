@@ -12,7 +12,8 @@ import {
   LifeBuoy,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Layers
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { Button } from "@/src/components/ui/button"
@@ -35,6 +36,7 @@ const navItems = [
   { icon: Building2, label: "Empresas", href: "/companies" },
   { icon: KanbanSquare, label: "Pipeline", href: "/pipeline", badge: "3" },
   { icon: FileText, label: "Propostas", href: "/proposals" },
+  { icon: Layers, label: "Serviços", href: "/services" },
   { icon: Calendar, label: "Atividades", href: "/activities", id: "activities" },
   { icon: BarChart3, label: "Relatórios", href: "/reports" },
   { icon: Settings, label: "Configurações", href: "/settings" },

@@ -135,7 +135,7 @@ const INITIAL_DEALS: Deal[] = [
     owner: { name: 'Mariana Costa', avatar: 'https://i.pravatar.cc/150?u=mariana' },
     expectedCloseDate: '2026-03-30',
     daysInStage: 2,
-    stageId: 'proposta',
+    stageId: 'enviada',
     activities: ['email', 'task'],
   },
   {
@@ -161,7 +161,7 @@ const INITIAL_DEALS: Deal[] = [
     owner: { name: 'Ana Silva', avatar: 'https://i.pravatar.cc/150?u=ana' },
     expectedCloseDate: '2026-03-22',
     daysInStage: 1,
-    stageId: 'fechamento',
+    stageId: 'ganho',
     activities: ['task'],
   },
 ]
