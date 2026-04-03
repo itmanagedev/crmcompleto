@@ -393,6 +393,77 @@ async function startServer() {
   // ==========================================
   // API: Deals
   // ==========================================
+  app.get("/api/reports", async (req, res) => {
+    try {
+      const deals = await prisma.deal.findMany({
+        include: { owner: true }
+      });
+      const proposals = await prisma.proposal.findMany();
+
+      // Funnel Data
+      const stages = ['prospeccao', 'qualificacao', 'enviada', 'negociacao', 'ganho', 'perdido'];
+      const stageNames: Record<string, string> = {
+        'prospeccao': 'Prospecção',
+        'qualificacao': 'Qualificação',
+        'enviada': 'Enviada',
+        'negociacao': 'Negociação',
+        'ganho': 'Ganho',
+        'perdido': 'Perdido'
+      };
+
+      const funnelData = stages.map(stage => {
+        const stageDeals = deals.filter(d => d.stage === stage);
+        return {
+          stage: stageNames[stage],
+          count: stageDeals.length,
+          value: stageDeals.reduce((sum, d) => sum + d.value, 0)
+        };
+      });
+
+      // Rep Performance
+      const repsMap = new Map();
+      deals.forEach(deal => {
+        if (!deal.ownerId) return;
+        const ownerName = deal.owner?.name || 'Desconhecido';
+        if (!repsMap.has(deal.ownerId)) {
+          repsMap.set(deal.ownerId, { name: ownerName, open: 0, won: 0, lost: 0, revenue: 0, target: 100000 });
+        }
+        const rep = repsMap.get(deal.ownerId);
+        if (deal.stage === 'ganho') {
+          rep.won += 1;
+          rep.revenue += deal.value;
+        } else if (deal.stage === 'perdido') {
+          rep.lost += 1;
+        } else {
+          rep.open += 1;
+        }
+      });
+
+      const repPerformance = Array.from(repsMap.values()).map(rep => {
+        const totalClosed = rep.won + rep.lost;
+        const winRate = totalClosed > 0 ? Math.round((rep.won / totalClosed) * 100) : 0;
+        const avgTicket = rep.won > 0 ? Math.round(rep.revenue / rep.won) : 0;
+        return { ...rep, winRate, avgTicket };
+      });
+
+      // Proposals Data
+      const proposalsData = [
+        { name: 'Enviadas', value: proposals.filter(p => p.status === 'SENT').length, color: '#3b82f6' },
+        { name: 'Aceitas', value: proposals.filter(p => p.status === 'ACCEPTED').length, color: '#10b981' },
+        { name: 'Recusadas', value: proposals.filter(p => p.status === 'REJECTED').length, color: '#ef4444' },
+        { name: 'Rascunho', value: proposals.filter(p => p.status === 'DRAFT').length, color: '#f59e0b' },
+      ];
+
+      res.json({
+        funnelData,
+        repPerformance,
+        proposalsData
+      });
+    } catch (error) {
+      console.error("Error generating reports:", error);
+      res.status(500).json({ error: "Failed to generate reports" });
+    }
+  });
   app.get("/api/deals", async (req, res) => {
     try {
       const deals = await prisma.deal.findMany({
@@ -729,6 +800,22 @@ async function startServer() {
         where: { id },
         data: updateData
       });
+
+      // Update deal stage based on proposal status
+      if (status && proposal.dealId) {
+        let newStage = null;
+        if (status === 'SENT') newStage = 'enviada';
+        else if (status === 'ACCEPTED') newStage = 'ganho';
+        else if (status === 'REJECTED') newStage = 'perdido';
+
+        if (newStage) {
+          await prisma.deal.update({
+            where: { id: proposal.dealId },
+            data: { stage: newStage }
+          });
+        }
+      }
+
       res.json(proposal);
     } catch (error) {
       console.error("Error updating proposal:", error);
@@ -818,7 +905,7 @@ async function startServer() {
       if (proposal.dealId) {
         await prisma.deal.update({
           where: { id: proposal.dealId },
-          data: { status: 'WON' }
+          data: { status: 'WON', stage: 'ganho' }
         });
       }
       
@@ -836,6 +923,14 @@ async function startServer() {
         where: { id },
         data: { status: 'REJECTED' }
       });
+
+      if (proposal.dealId) {
+        await prisma.deal.update({
+          where: { id: proposal.dealId },
+          data: { status: 'LOST', stage: 'perdido' }
+        });
+      }
+
       res.json(proposal);
     } catch (error) {
       console.error("Error rejecting proposal:", error);

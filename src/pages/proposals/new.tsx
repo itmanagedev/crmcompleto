@@ -112,9 +112,9 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
                 <View style={pdfStyles.tableRowSub} key={sub.id}>
                   <Text style={pdfStyles.colDesc}>   └ {sub.description || 'Equipamento'}</Text>
                   <Text style={pdfStyles.colQtd}>{sub.quantity}</Text>
-                  <Text style={pdfStyles.colPrice}>R$ {sub.unitPrice.toFixed(2)}</Text>
-                  <Text style={pdfStyles.colDisc}>{sub.discount > 0 ? `${sub.discount}%` : '-'}</Text>
-                  <Text style={pdfStyles.colTotal}>R$ {((sub.quantity * sub.unitPrice) * (1 - sub.discount / 100)).toFixed(2)}</Text>
+                  <Text style={pdfStyles.colPrice}>-</Text>
+                  <Text style={pdfStyles.colDisc}>-</Text>
+                  <Text style={pdfStyles.colTotal}>-</Text>
                 </View>
               ))}
             </React.Fragment>
@@ -161,13 +161,7 @@ function SortableItem({ item, onUpdate, onRemove, onAddSubItem, onUpdateSubItem,
   const discountAmount = subtotal * (item.discount / 100)
   const itemTotal = subtotal - discountAmount
   
-  const subItemsTotal = (item.subItems || []).reduce((acc, sub) => {
-    const subSubtotal = sub.quantity * sub.unitPrice
-    const subDiscount = subSubtotal * (sub.discount / 100)
-    return acc + (subSubtotal - subDiscount)
-  }, 0)
-
-  const total = itemTotal + subItemsTotal
+  const total = itemTotal
 
   return (
     <div ref={setNodeRef} style={style} className="flex flex-col gap-2 p-4 bg-card border rounded-lg shadow-sm group">
@@ -214,20 +208,17 @@ function SortableItem({ item, onUpdate, onRemove, onAddSubItem, onUpdateSubItem,
       {item.subItems && item.subItems.length > 0 && (
         <div className="pl-12 space-y-2 mt-2">
           {item.subItems.map(subItem => {
-            const subSubtotal = subItem.quantity * subItem.unitPrice
-            const subDiscountAmount = subSubtotal * (subItem.discount / 100)
-            const subTotal = subSubtotal - subDiscountAmount
             return (
               <div key={subItem.id} className="flex items-center gap-4 p-2 bg-muted/30 border rounded-md group/sub">
                 <div className="text-muted-foreground">└</div>
                 <div className="grid grid-cols-12 gap-4 flex-1 items-center">
-                  <div className="col-span-3">
+                  <div className="col-span-6">
                     <Input value={subItem.description} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'description', e.target.value)} placeholder="Equipamento/Item" className="h-8 text-sm" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <Input type="number" value={subItem.quantity} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'quantity', Number(e.target.value))} min={1} className="h-8 text-sm" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <Select value={subItem.unit} onValueChange={(val) => onUpdateSubItem(item.id, subItem.id, 'unit', val)}>
                       <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -238,18 +229,9 @@ function SortableItem({ item, onUpdate, onRemove, onAddSubItem, onUpdateSubItem,
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-2">
-                    <Input type="number" value={subItem.unitPrice} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'unitPrice', Number(e.target.value))} min={0} step="0.01" className="h-8 text-sm" />
-                  </div>
-                  <div className="col-span-1">
-                    <Input type="number" value={subItem.discount} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'discount', Number(e.target.value))} min={0} max={100} placeholder="Desc %" className="h-8 text-sm" />
-                  </div>
-                  <div className="col-span-2 text-right font-medium text-sm text-muted-foreground">
-                    R$ {subTotal.toFixed(2)}
-                  </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => onRemoveSubItem(item.id, subItem.id)} className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             )

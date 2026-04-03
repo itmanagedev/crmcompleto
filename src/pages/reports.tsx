@@ -9,59 +9,12 @@ import { cn } from "@/src/lib/utils"
 import * as XLSX from 'xlsx'
 
 // --- Mock Data ---
-const FUNNEL_DATA = [
-  { stage: 'Prospecção', count: 1200, value: 1200000 },
-  { stage: 'Qualificação', count: 850, value: 850000 },
-  { stage: 'Proposta', count: 450, value: 450000 },
-  { stage: 'Negociação', count: 250, value: 250000 },
-  { stage: 'Fechamento', count: 150, value: 150000 },
-]
 
-const REP_PERFORMANCE = [
-  { name: 'Ana Silva', open: 45, won: 12, lost: 3, winRate: 80, avgTicket: 12500, revenue: 150000, target: 120000 },
-  { name: 'Carlos Mendes', open: 32, won: 8, lost: 5, winRate: 61, avgTicket: 11875, revenue: 95000, target: 100000 },
-  { name: 'Mariana Costa', open: 58, won: 15, lost: 2, winRate: 88, avgTicket: 14000, revenue: 210000, target: 180000 },
-  { name: 'Roberto Alves', open: 21, won: 5, lost: 8, winRate: 38, avgTicket: 9000, revenue: 45000, target: 80000 },
-]
 
-const FORECAST_DATA = [
-  { month: 'Jan', pessimist: 30000, realist: 45000, optimist: 60000, actual: 48000 },
-  { month: 'Fev', pessimist: 35000, realist: 50000, optimist: 65000, actual: 52000 },
-  { month: 'Mar', pessimist: 40000, realist: 55000, optimist: 70000, actual: 58000 },
-  { month: 'Abr', pessimist: 45000, realist: 60000, optimist: 80000, actual: null },
-  { month: 'Mai', pessimist: 50000, realist: 65000, optimist: 85000, actual: null },
-  { month: 'Jun', pessimist: 55000, realist: 70000, optimist: 90000, actual: null },
-]
-
-const ACTIVITY_DATA = [
-  { name: 'Seg', call: 40, email: 85, meeting: 12, task: 25 },
-  { name: 'Ter', call: 45, email: 90, meeting: 15, task: 30 },
-  { name: 'Qua', call: 55, email: 110, meeting: 18, task: 35 },
-  { name: 'Qui', call: 50, email: 95, meeting: 14, task: 28 },
-  { name: 'Sex', call: 35, email: 70, meeting: 8, task: 20 },
-]
-
-const LEAD_SOURCE_DATA = [
-  { name: 'Busca Orgânica', value: 400, color: '#3b82f6' },
-  { name: 'Indicação', value: 300, color: '#10b981' },
-  { name: 'Eventos', value: 200, color: '#f59e0b' },
-  { name: 'Outbound', value: 150, color: '#8b5cf6' },
-  { name: 'Redes Sociais', value: 100, color: '#ec4899' },
-]
-
-const PROPOSALS_DATA = [
-  { name: 'Enviadas', value: 120, color: '#3b82f6' },
-  { name: 'Aceitas', value: 45, color: '#10b981' },
-  { name: 'Recusadas', value: 30, color: '#ef4444' },
-  { name: 'Expiradas', value: 45, color: '#f59e0b' },
-]
-
-const TOP_PRODUCTS = [
-  { name: 'Licenciamento Enterprise', count: 45, revenue: 450000 },
-  { name: 'Consultoria de Implantação', count: 38, revenue: 190000 },
-  { name: 'Treinamento de Equipe', count: 25, revenue: 50000 },
-  { name: 'Suporte Premium 24/7', count: 20, revenue: 120000 },
-]
+  const FORECAST_DATA: any[] = []
+  const ACTIVITY_DATA: any[] = []
+  const LEAD_SOURCE_DATA: any[] = []
+  const TOP_PRODUCTS: any[] = []
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value)
@@ -71,6 +24,26 @@ export function Reports() {
   const [activeReport, setActiveReport] = React.useState('funnel')
   const [period, setPeriod] = React.useState('this_year')
   const [salesRep, setSalesRep] = React.useState('all')
+  const [reportData, setReportData] = React.useState<any>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setIsLoading(true)
+        const res = await fetch('/api/reports')
+        if (res.ok) {
+          const data = await res.json()
+          setReportData(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch reports:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchReports()
+  }, [])
 
   const handleExportExcel = (data: any[], filename: string) => {
     const ws = XLSX.utils.json_to_sheet(data)
@@ -82,6 +55,14 @@ export function Reports() {
   const handlePrint = () => {
     window.print()
   }
+
+  if (isLoading || !reportData) {
+    return <div className="p-8 flex justify-center items-center h-full">Carregando relatórios...</div>
+  }
+
+  const FUNNEL_DATA = reportData.funnelData || []
+  const REP_PERFORMANCE = reportData.repPerformance || []
+  const PROPOSALS_DATA = reportData.proposalsData || []
 
   const renderReportContent = () => {
     switch (activeReport) {
@@ -131,8 +112,8 @@ export function Reports() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {FUNNEL_DATA.map((stage, i) => {
-                      const conversion = Math.round((stage.count / FUNNEL_DATA[0].count) * 100)
+                    {FUNNEL_DATA.map((stage: any, i: number) => {
+                      const conversion = FUNNEL_DATA.length > 0 && FUNNEL_DATA[0].count > 0 ? Math.round((stage.count / FUNNEL_DATA[0].count) * 100) : 0
                       return (
                         <tr key={i} className="hover:bg-muted/50 transition-colors">
                           <td className="px-4 py-3 font-medium text-foreground">{stage.stage}</td>

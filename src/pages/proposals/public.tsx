@@ -193,16 +193,13 @@ export default function PublicProposalView() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">R$ {total.toFixed(2)}</td>
                           </tr>
                           {item.subItems && item.subItems.length > 0 && item.subItems.map((subItem: any) => {
-                            const subItemSubtotal = subItem.quantity * subItem.unitPrice;
-                            const subItemDiscountAmount = subItemSubtotal * ((subItem.discount || 0) / 100);
-                            const subItemTotal = subItemSubtotal - subItemDiscountAmount;
                             return (
                               <tr key={subItem.id} className="bg-gray-50/50">
                                 <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 pl-10">↳ {subItem.description}</td>
                                 <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{subItem.quantity} {subItem.unit}</td>
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">R$ {subItem.unitPrice.toFixed(2)}</td>
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">{subItem.discount || 0}%</td>
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">R$ {subItemTotal.toFixed(2)}</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
                               </tr>
                             );
                           })}

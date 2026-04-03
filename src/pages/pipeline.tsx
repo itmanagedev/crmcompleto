@@ -67,7 +67,7 @@ import { cn } from "@/src/lib/utils"
 
 // --- Types & Mock Data ---
 
-type StageId = 'prospeccao' | 'qualificacao' | 'proposta' | 'negociacao' | 'fechamento' | 'ganho' | 'perdido'
+type StageId = 'prospeccao' | 'qualificacao' | 'enviada' | 'negociacao' | 'ganho' | 'perdido'
 
 interface Deal {
   id: string
@@ -92,11 +92,10 @@ interface Stage {
 const STAGES: Stage[] = [
   { id: 'prospeccao', title: 'Prospecção', color: 'bg-slate-500' },
   { id: 'qualificacao', title: 'Qualificação', color: 'bg-blue-500' },
-  { id: 'proposta', title: 'Proposta Enviada', color: 'bg-indigo-500' },
+  { id: 'enviada', title: 'Enviada', color: 'bg-indigo-500' },
   { id: 'negociacao', title: 'Negociação', color: 'bg-amber-500' },
-  { id: 'fechamento', title: 'Fechamento', color: 'bg-orange-500' },
-  { id: 'ganho', title: 'Ganho ✓', color: 'bg-emerald-500' },
-  { id: 'perdido', title: 'Perdido ✗', color: 'bg-red-500' },
+  { id: 'ganho', title: 'Ganho', color: 'bg-emerald-500' },
+  { id: 'perdido', title: 'Perdido', color: 'bg-red-500' },
 ]
 
 const INITIAL_DEALS: Deal[] = [
