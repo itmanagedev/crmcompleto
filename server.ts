@@ -283,15 +283,38 @@ async function startServer() {
       }).sort((a, b) => b.revenue - a.revenue);
 
       // revenue data (last 6 months)
-      const months = ['Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar'];
-      const revenueData = months.map(m => ({ month: m, revenue: 0, target: 0 }));
+      const revenueData = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+        const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        
+        const monthlyWonDeals = await prisma.deal.findMany({
+          where: {
+            status: 'won',
+            updatedAt: {
+              gte: monthStart,
+              lte: monthEnd
+            }
+          }
+        });
+        
+        const revenue = monthlyWonDeals.reduce((sum, deal) => sum + deal.value, 0);
+        
+        revenueData.push({
+          month: d.toLocaleString('pt-BR', { month: 'short' }),
+          revenue: revenue,
+          target: 50000 // Example target
+        });
+      }
 
       res.json({
         kpiData: {
-          openDeals: { value: openDealsCount, trend: 0, history: [] },
-          expectedRevenue: { value: expectedRevenue, trend: 0, history: [] },
-          conversionRate: { value: parseFloat(conversionRate.toFixed(1)), trend: 0, history: [] },
-          pendingActivities: { value: pendingActivitiesCount, trend: 0, history: [] }
+          openDeals: { value: openDealsCount, trend: 0, history: [openDealsCount, openDealsCount] },
+          expectedRevenue: { value: expectedRevenue, trend: 0, history: [expectedRevenue, expectedRevenue] },
+          conversionRate: { value: parseFloat(conversionRate.toFixed(1)), trend: 0, history: [parseFloat(conversionRate.toFixed(1)), parseFloat(conversionRate.toFixed(1))] },
+          pendingActivities: { value: pendingActivitiesCount, trend: 0, history: [pendingActivitiesCount, pendingActivitiesCount] }
         },
         pipelineData,
         dealsAtRisk,
@@ -302,6 +325,68 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // ==========================================
+  // API: Users
+  // ==========================================
+
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        orderBy: { name: 'asc' }
+      });
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/users", async (req, res) => {
+    try {
+      const { name, email, role } = req.body;
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          role: role || 'sales',
+          status: 'pending'
+        }
+      });
+      res.json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+
+  app.put("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role, status } = req.body;
+      const user = await prisma.user.update({
+        where: { id },
+        data: { role, status }
+      });
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await prisma.user.delete({
+        where: { id }
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
     }
   });
 
@@ -574,6 +659,151 @@ async function startServer() {
     } catch (error) {
       console.error("Error fetching proposal:", error);
       res.status(500).json({ error: "Failed to fetch proposal" });
+    }
+  });
+
+  app.get("/api/proposals/public/:hash", async (req, res) => {
+    try {
+      const { hash } = req.params;
+      let proposal = await prisma.proposal.findUnique({
+        where: { linkHash: hash },
+        include: { deal: true, template: true }
+      });
+      if (!proposal) {
+        proposal = await prisma.proposal.findUnique({
+          where: { id: hash },
+          include: { deal: true, template: true }
+        });
+      }
+      if (!proposal) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error fetching public proposal:", error);
+      res.status(500).json({ error: "Failed to fetch proposal" });
+    }
+  });
+
+  app.get("/api/proposals/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (id === 'hash') return; // skip if it's the hash route
+      const proposal = await prisma.proposal.findUnique({
+        where: { id },
+        include: { deal: true, template: true }
+      });
+      if (!proposal) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error fetching proposal:", error);
+      res.status(500).json({ error: "Failed to fetch proposal" });
+    }
+  });
+
+  app.put("/api/proposals/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
+      
+      const updateData: any = {};
+      
+      if (dealId !== undefined) updateData.dealId = dealId;
+      if (totalValue !== undefined) updateData.totalValue = totalValue;
+      if (observations !== undefined) updateData.observations = observations;
+      if (services !== undefined) updateData.services = services;
+      if (status !== undefined) updateData.status = status;
+      if (templateId !== undefined) updateData.templateId = templateId;
+      if (title !== undefined) updateData.title = title;
+      if (companyName !== undefined) updateData.companyName = companyName;
+      if (contactName !== undefined) updateData.contactName = contactName;
+      if (message !== undefined) updateData.message = message;
+
+      if (validUntil !== undefined) {
+        updateData.validUntil = validUntil ? new Date(validUntil) : null;
+      }
+      
+      const proposal = await prisma.proposal.update({
+        where: { id },
+        data: updateData
+      });
+      res.json(proposal);
+    } catch (error) {
+      console.error("Error updating proposal:", error);
+      res.status(500).json({ error: "Failed to update proposal" });
+    }
+  });
+
+  app.delete("/api/proposals/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await prisma.proposal.delete({
+        where: { id }
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting proposal:", error);
+      res.status(500).json({ error: "Failed to delete proposal" });
+    }
+  });
+
+  app.post("/api/proposals/:id/send", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { to, subject, message } = req.body || {};
+      
+      const proposal = await prisma.proposal.findUnique({
+        where: { id },
+        include: { deal: { include: { contact: true } } }
+      });
+
+      if (!proposal) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+
+      const toEmail = to || proposal.deal?.contact?.email;
+      if (!toEmail) {
+        return res.status(400).json({ error: "Contact email not found for this proposal" });
+      }
+
+      const proposalLink = `${process.env.APP_URL || 'http://localhost:3000'}/p/${proposal.linkHash}`;
+      
+      const mailOptions = {
+        from: process.env.SMTP_FROM || '"CRM" <nao-responda@suaempresa.com.br>',
+        to: toEmail,
+        subject: subject || `Proposta Comercial: ${proposal.title}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Olá ${proposal.contactName || proposal.deal?.contact?.name || 'Cliente'},</h2>
+            <p>${message ? message.replace(/\n/g, '<br>') : 'Apresentamos nossa proposta comercial para os serviços solicitados.'}</p>
+            <div style="margin: 30px 0;">
+              <a href="${proposalLink}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Visualizar Proposta Completa
+              </a>
+            </div>
+            <p>Atenciosamente,<br>Equipe Comercial</p>
+          </div>
+        `
+      };
+
+      if (process.env.SMTP_HOST === 'smtp.mailtrap.io' || !process.env.SMTP_HOST) {
+        console.log("Mocking email send to:", toEmail);
+        console.log("Email content:", mailOptions.html);
+      } else {
+        await transporter.sendMail(mailOptions);
+      }
+
+      const updatedProposal = await prisma.proposal.update({
+        where: { id },
+        data: { status: 'sent' }
+      });
+
+      res.json(updatedProposal);
+    } catch (error) {
+      console.error("Error sending proposal email:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to send email" });
     }
   });
 

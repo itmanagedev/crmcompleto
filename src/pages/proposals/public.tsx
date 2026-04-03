@@ -77,7 +77,7 @@ export default function PublicProposalView() {
   useEffect(() => {
     const fetchProposal = async () => {
       try {
-        const res = await fetch(`/api/proposals/${hash}`);
+        const res = await fetch(`/api/proposals/public/${hash}`);
         if (!res.ok) throw new Error('Proposta não encontrada');
         const data = await res.json();
         setProposal(data);

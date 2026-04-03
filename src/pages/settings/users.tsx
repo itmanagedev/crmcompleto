@@ -33,13 +33,6 @@ import {
   DialogTrigger,
 } from "@/src/components/ui/dialog"
 
-const USERS = [
-  { id: '1', name: 'João Silva', email: 'admin@crmpro.com', role: 'admin', status: 'active', lastLogin: 'Hoje, 09:41' },
-  { id: '2', name: 'Maria Souza', email: 'maria@crmpro.com', role: 'manager', status: 'active', lastLogin: 'Ontem, 18:20' },
-  { id: '3', name: 'Carlos Santos', email: 'carlos@crmpro.com', role: 'sales', status: 'inactive', lastLogin: '15/03/2026' },
-  { id: '4', name: 'Ana Costa', email: 'ana@crmpro.com', role: 'viewer', status: 'pending', lastLogin: 'Nunca' },
-]
-
 const PERMISSIONS = [
   { module: 'Contatos', admin: ['view', 'create', 'edit', 'delete'], manager: ['view', 'create', 'edit', 'delete'], sales: ['view', 'create', 'edit'], viewer: ['view'] },
   { module: 'Empresas', admin: ['view', 'create', 'edit', 'delete'], manager: ['view', 'create', 'edit', 'delete'], sales: ['view', 'create', 'edit'], viewer: ['view'] },
@@ -69,6 +62,83 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function UsersSettings() {
   const [isInviteOpen, setIsInviteOpen] = React.useState(false)
+  const [users, setUsers] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [newUser, setNewUser] = React.useState({ name: '', email: '', role: 'sales' })
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/users')
+      if (res.ok) {
+        const data = await res.json()
+        setUsers(data)
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const handleInvite = async () => {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      })
+      if (res.ok) {
+        alert('Convite enviado com sucesso!')
+        setIsInviteOpen(false)
+        setNewUser({ name: '', email: '', role: 'sales' })
+        fetchUsers()
+      } else {
+        alert('Erro ao enviar convite.')
+      }
+    } catch (error) {
+      console.error("Error inviting user:", error)
+      alert('Erro ao enviar convite.')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja remover este usuário?')) {
+      try {
+        const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+        if (res.ok) {
+          fetchUsers()
+        } else {
+          alert('Erro ao remover usuário.')
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error)
+        alert('Erro ao remover usuário.')
+      }
+    }
+  }
+
+  const handleStatusChange = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (res.ok) {
+        fetchUsers()
+      } else {
+        alert('Erro ao atualizar status do usuário.')
+      }
+    } catch (error) {
+      console.error("Error updating user status:", error)
+      alert('Erro ao atualizar status do usuário.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -76,7 +146,7 @@ export function UsersSettings() {
         <div>
           <h3 className="text-lg font-medium">Usuários e Permissões</h3>
           <p className="text-sm text-muted-foreground">
-            Gerencie o acesso da sua equipe ao CRM.
+            Gerencie o acesso da sua equipe ao CRM. Aqui você pode cadastrar novos vendedores.
           </p>
         </div>
         <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
@@ -95,12 +165,27 @@ export function UsersSettings() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
+                <Label htmlFor="invite-name">Nome</Label>
+                <Input 
+                  id="invite-name" 
+                  placeholder="Nome do usuário" 
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="invite-email">E-mail</Label>
-                <Input id="invite-email" type="email" placeholder="nome@empresa.com" />
+                <Input 
+                  id="invite-email" 
+                  type="email" 
+                  placeholder="nome@empresa.com" 
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="invite-role">Papel de Acesso</Label>
-                <Select defaultValue="sales">
+                <Select value={newUser.role} onValueChange={(val) => setNewUser({...newUser, role: val})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -115,7 +200,7 @@ export function UsersSettings() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsInviteOpen(false)}>Cancelar</Button>
-              <Button onClick={() => setIsInviteOpen(false)}>Enviar Convite</Button>
+              <Button onClick={handleInvite}>Enviar Convite</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -138,12 +223,21 @@ export function UsersSettings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {USERS.map((user) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">Carregando...</TableCell>
+                </TableRow>
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">Nenhum usuário encontrado.</TableCell>
+                </TableRow>
+              ) : users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={user.image} />
+                        <AvatarFallback>{(user.name || 'U').substring(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="font-medium">{user.name}</span>
@@ -153,16 +247,16 @@ export function UsersSettings() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-normal">
-                      {ROLE_LABELS[user.role]}
+                      {ROLE_LABELS[user.role || 'sales'] || user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={STATUS_COLORS[user.status]}>
-                      {STATUS_LABELS[user.status]}
+                    <Badge variant="secondary" className={STATUS_COLORS[user.status || 'active'] || STATUS_COLORS.active}>
+                      {STATUS_LABELS[user.status || 'active'] || user.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {user.lastLogin}
+                    {user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('pt-BR') : 'Nunca'}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -176,8 +270,13 @@ export function UsersSettings() {
                         <DropdownMenuItem>Editar Papel</DropdownMenuItem>
                         {user.status === 'pending' && <DropdownMenuItem>Reenviar Convite</DropdownMenuItem>}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          {user.status === 'active' ? 'Desativar Usuário' : 'Remover Usuário'}
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(user.id, user.status)}
+                        >
+                          {user.status === 'active' ? 'Desativar Usuário' : 'Ativar Usuário'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
+                          Remover Usuário
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search, Plus, Filter, MoreHorizontal, FileText, Calendar, CheckCircle2, XCircle, Clock, Eye, Copy, Send, Check } from "lucide-react"
+import { Search, Plus, Filter, MoreHorizontal, FileText, Calendar, CheckCircle2, XCircle, Clock, Eye, Send, Check } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { Badge } from "@/src/components/ui/badge"
@@ -156,10 +156,64 @@ export function ProposalsList() {
   }, [proposals, searchQuery, statusFilter])
 
   const handleAction = async (id: string, action: string) => {
+    const proposal = proposals.find(p => p.id === id)
+    
     if (action === 'view') {
-      const proposal = proposals.find(p => p.id === id)
       if (proposal && proposal.linkHash) {
         window.open(`/p/${proposal.linkHash}`, '_blank')
+      }
+    } else if (action === 'copy_link') {
+      if (proposal && proposal.linkHash) {
+        const url = `${window.location.origin}/p/${proposal.linkHash}`
+        navigator.clipboard.writeText(url)
+        alert("Link copiado para a área de transferência!")
+      }
+    } else if (action === 'edit') {
+      navigate(`/proposals/new?id=${id}`)
+    } else if (action === 'send') {
+      if (proposal) {
+        const hash = proposal.linkHash || proposal.id
+        const url = `${window.location.origin}/p/${hash}`
+        
+        try {
+          const res = await fetch(`/api/proposals/${id}`, { 
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'SENT' })
+          })
+          if (res.ok) {
+            setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'SENT' } : p))
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(url)
+                alert(`Link de autorização gerado e copiado para a área de transferência!\n\n${url}`)
+              } else {
+                alert(`Link de autorização gerado!\n\nCopie o link abaixo:\n${url}`)
+              }
+            } catch (clipboardError) {
+              alert(`Link de autorização gerado!\n\nCopie o link abaixo:\n${url}`)
+            }
+          } else {
+            alert("Erro ao atualizar status da proposta.")
+          }
+        } catch (error) {
+          console.error("Error updating status:", error)
+          alert("Erro ao gerar link.")
+        }
+      }
+    } else if (action === 'delete') {
+      if (confirm("Tem certeza que deseja excluir esta proposta?")) {
+        try {
+          const res = await fetch(`/api/proposals/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setProposals(prev => prev.filter(p => p.id !== id))
+          } else {
+            alert("Erro ao excluir proposta.")
+          }
+        } catch (error) {
+          console.error("Error deleting proposal:", error)
+          alert("Erro ao excluir proposta.")
+        }
       }
     } else if (action === 'accept') {
       try {
@@ -276,11 +330,20 @@ export function ProposalsList() {
                           <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'view')}>
                             <FileText className="h-4 w-4 mr-2" /> Visualizar Proposta
                           </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'edit')}>
+                            <FileText className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'send')}>
+                            <Send className="h-4 w-4 mr-2" /> Enviar (Gerar link de autorização)
+                          </DropdownMenuItem>
                           {proposal.status !== 'ACCEPTED' && (
                             <DropdownMenuItem className="cursor-pointer text-emerald-600" onClick={() => handleAction(proposal.id, 'accept')}>
                               <Check className="h-4 w-4 mr-2" /> Marcar como Aceita
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleAction(proposal.id, 'delete')}>
+                            <XCircle className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

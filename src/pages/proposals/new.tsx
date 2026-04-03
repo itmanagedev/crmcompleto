@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Check, ChevronRight, Save, FileText, Send, Plus, Trash2, GripVertical, Download, Mail } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
@@ -262,7 +262,11 @@ function SortableItem({ item, onUpdate, onRemove, onAddSubItem, onUpdateSubItem,
 
 export function NewProposal() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const proposalId = searchParams.get('id')
+  
   const [currentStep, setCurrentStep] = React.useState(1)
+  const [isSaving, setIsSaving] = React.useState(false)
   
   // Form State
   const [basicData, setBasicData] = React.useState({
@@ -293,7 +297,7 @@ export function NewProposal() {
         if (res.ok) {
           const data = await res.json()
           setTemplates(data)
-          if (data.length > 0) {
+          if (data.length > 0 && !proposalId) {
             setVisualData(prev => ({
               ...prev,
               template: data[0].id,
@@ -339,11 +343,43 @@ export function NewProposal() {
         console.error(e)
       }
     }
+    
+    const fetchProposal = async () => {
+      if (!proposalId) return;
+      try {
+        const res = await fetch(`/api/proposals/${proposalId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setBasicData({
+            company: data.companyName || '',
+            contact: data.contactName || '',
+            dealId: data.dealId || 'none',
+            validUntil: data.validUntil ? new Date(data.validUntil).toISOString().split('T')[0] : '',
+            currency: 'BRL',
+            globalDiscount: 0,
+            message: data.message || '',
+            observations: data.observations || ''
+          })
+          if (data.services && Array.isArray(data.services)) {
+            setItems(data.services)
+          }
+          setVisualData(prev => ({
+            ...prev,
+            title: data.title || 'Proposta Comercial',
+            template: data.templateId || 'modern'
+          }))
+        }
+      } catch (e) {
+        console.error("Error fetching proposal:", e)
+      }
+    }
+
     fetchTemplates()
     fetchCompanies()
     fetchContacts()
     fetchDeals()
-  }, [])
+    fetchProposal()
+  }, [proposalId])
 
   // Dnd Sensors
   const sensors = useSensors(
@@ -421,6 +457,82 @@ export function NewProposal() {
   
   const globalDiscountAmount = (subtotal - itemDiscounts) * (basicData.globalDiscount / 100)
   const total = subtotal - itemDiscounts - globalDiscountAmount
+
+  const handleSaveProposal = async (status: string, sendEmail: boolean = false) => {
+    setIsSaving(true)
+    try {
+      const payload = {
+        title: visualData.title,
+        templateId: visualData.template === 'modern' ? null : visualData.template,
+        dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
+        companyName: basicData.company,
+        contactName: basicData.contact,
+        validUntil: basicData.validUntil,
+        message: basicData.message,
+        totalValue: isNaN(total) ? 0 : total,
+        observations: basicData.observations,
+        services: items,
+        status: status
+      }
+
+      const url = proposalId ? `/api/proposals/${proposalId}` : '/api/proposals'
+      const method = proposalId ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        const proposal = await res.json()
+        
+        if (sendEmail) {
+          const emailRes = await fetch(`/api/proposals/${proposal.id}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: emailData.to,
+              subject: emailData.subject,
+              message: emailData.message
+            })
+          })
+          
+          if (emailRes.ok) {
+            alert('Proposta salva e e-mail enviado com sucesso!')
+          } else {
+            const errorData = await emailRes.json()
+            alert(`Proposta salva, mas houve um erro ao enviar o e-mail: ${errorData.error || 'Erro desconhecido'}`)
+          }
+        } else {
+          if (status === 'SENT') {
+            const hash = proposal.linkHash || proposal.id
+            const link = `${window.location.origin}/p/${hash}`
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(link)
+                alert(`Proposta salva com sucesso!\n\nLink de autorização gerado e copiado para a área de transferência:\n${link}`)
+              } else {
+                alert(`Proposta salva com sucesso!\n\nLink de autorização gerado:\n${link}`)
+              }
+            } catch (clipboardError) {
+              alert(`Proposta salva com sucesso!\n\nLink de autorização gerado:\n${link}`)
+            }
+          } else {
+            alert(`Proposta salva com sucesso!`)
+          }
+        }
+        navigate('/proposals')
+      } else {
+        alert('Erro ao salvar proposta.')
+      }
+    } catch (error) {
+      console.error("Error saving proposal:", error)
+      alert('Erro ao salvar proposta.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const steps = [
     { id: 1, title: 'Dados Básicos' },
@@ -790,89 +902,15 @@ export function NewProposal() {
                         </div>
                         <DialogFooterUI>
                           <Button variant="outline">Agendar Envio</Button>
-                          <Button onClick={async () => {
-                            try {
-                              const res = await fetch('/api/proposals', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  title: visualData.title,
-                                  templateId: visualData.template === 'modern' ? null : visualData.template,
-                                  dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
-                                  companyName: basicData.company,
-                                  contactName: basicData.contact,
-                                  validUntil: basicData.validUntil,
-                                  message: basicData.message,
-                                  totalValue: total,
-                                  observations: basicData.observations,
-                                  services: items,
-                                  status: 'SENT'
-                                })
-                              })
-                              if (res.ok) {
-                                const proposal = await res.json()
-                                
-                                // Send Email
-                                const emailRes = await fetch(`/api/propostas/${proposal.id}/email`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    to: emailData.to || 'cliente@exemplo.com',
-                                    subject: emailData.subject,
-                                    message: emailData.message
-                                  })
-                                })
-                                
-                                if (emailRes.ok) {
-                                  alert('Proposta salva e e-mail enviado com sucesso!')
-                                } else {
-                                  const errorData = await emailRes.json().catch(() => ({}));
-                                  alert(`Proposta salva, mas houve um erro ao enviar o e-mail: ${errorData.error || 'Erro desconhecido'}`)
-                                }
-                                navigate('/proposals')
-                              } else {
-                                alert('Erro ao salvar proposta')
-                              }
-                            } catch (e) {
-                              console.error(e)
-                              alert('Erro ao salvar proposta')
-                            }
-                          }}>Enviar Agora</Button>
+                          <Button onClick={() => handleSaveProposal('SENT', true)} disabled={isSaving}>
+                            {isSaving ? 'Enviando...' : 'Enviar Agora'}
+                          </Button>
                         </DialogFooterUI>
                       </DialogContent>
                     </Dialog>
                     
                     <div className="pt-4 border-t flex gap-2">
-                      <Button variant="outline" className="flex-1" onClick={async () => {
-                        try {
-                          const res = await fetch('/api/proposals', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              title: visualData.title,
-                              templateId: visualData.template === 'modern' ? null : visualData.template,
-                              dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
-                              companyName: basicData.company,
-                              contactName: basicData.contact,
-                              validUntil: basicData.validUntil,
-                              message: basicData.message,
-                              totalValue: total,
-                              observations: basicData.observations,
-                              services: items,
-                              status: 'DRAFT'
-                            })
-                          })
-                          if (res.ok) {
-                            alert('Proposta salva como rascunho!')
-                            navigate('/proposals')
-                          } else {
-                            alert('Erro ao salvar rascunho')
-                          }
-                        } catch (e) {
-                          console.error(e)
-                          alert('Erro ao salvar rascunho')
-                        }
-                      }}>
+                      <Button variant="outline" className="flex-1" onClick={() => handleSaveProposal('DRAFT', false)} disabled={isSaving}>
                         Salvar Rascunho
                       </Button>
                     </div>
@@ -936,43 +974,18 @@ export function NewProposal() {
           Voltar
         </Button>
         <div className="flex gap-2">
-          <Button variant="ghost" className="hidden sm:flex" onClick={async () => {
-            try {
-              const res = await fetch('/api/proposals', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  title: visualData.title,
-                  templateId: visualData.template === 'modern' ? null : visualData.template,
-                  dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
-                  companyName: basicData.company,
-                  contactName: basicData.contact,
-                  validUntil: basicData.validUntil,
-                  message: basicData.message,
-                  totalValue: total,
-                  observations: basicData.observations,
-                  services: items,
-                  status: 'DRAFT'
-                })
-              })
-              if (res.ok) {
-                alert('Proposta salva como rascunho!')
-                navigate('/proposals')
-              } else {
-                alert('Erro ao salvar rascunho')
-              }
-            } catch (e) {
-              console.error(e)
-              alert('Erro ao salvar rascunho')
-            }
-          }}>
+          <Button variant="ghost" className="hidden sm:flex" onClick={() => handleSaveProposal('DRAFT', false)} disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" /> Salvar Rascunho
           </Button>
           {currentStep < 4 ? (
             <Button onClick={() => setCurrentStep(prev => Math.min(4, prev + 1))}>
               Próximo Passo <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
-          ) : null}
+          ) : (
+            <Button onClick={() => handleSaveProposal('SENT', false)} disabled={isSaving}>
+              <Check className="w-4 h-4 mr-2" /> Finalizar
+            </Button>
+          )}
         </div>
       </div>
     </div>
