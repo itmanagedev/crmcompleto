@@ -14,6 +14,14 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value)
 }
 
+const LEAD_SOURCE_DATA = [
+  { name: 'Inbound Marketing', value: 45, color: '#3b82f6' },
+  { name: 'Indicações', value: 25, color: '#10b981' },
+  { name: 'Eventos', value: 15, color: '#f59e0b' },
+  { name: 'Outbound', value: 10, color: '#ef4444' },
+  { name: 'Outros', value: 5, color: '#8b5cf6' },
+]
+
 export function Reports() {
   const [activeReport, setActiveReport] = React.useState('funnel')
   const [period, setPeriod] = React.useState('this_year')

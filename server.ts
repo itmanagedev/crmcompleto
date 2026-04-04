@@ -69,9 +69,9 @@ async function startServer() {
       delete data.logo;
       const company = await prisma.company.create({ data });
       res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to create company" });
+      res.status(500).json({ error: error.message || "Failed to create company" });
     }
   });
 
@@ -97,14 +97,15 @@ async function startServer() {
       delete data.dealsCount;
       delete data.owner;
       delete data.logo;
+      delete data._count;
       const company = await prisma.company.update({
         where: { id: req.params.id },
         data
       });
       res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to update company" });
+      res.status(500).json({ error: error.message || "Failed to update company" });
     }
   });
 

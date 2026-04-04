@@ -115,7 +115,8 @@ export function CompaniesList() {
           const updated = await res.json()
           setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...updated, contactsCount: c.contactsCount, dealsCount: c.dealsCount } : c))
         } else {
-          alert('Erro ao atualizar empresa')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao atualizar empresa: ${errData.error || res.statusText}`)
         }
       } else {
         const res = await fetch('/api/companies', {
@@ -127,7 +128,8 @@ export function CompaniesList() {
           const created = await res.json()
           setCompanies([{ ...created, contactsCount: 0, dealsCount: 0 }, ...companies])
         } else {
-          alert('Erro ao criar empresa')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao criar empresa: ${errData.error || res.statusText}`)
         }
       }
     } catch (error) {

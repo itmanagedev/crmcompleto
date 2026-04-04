@@ -38,6 +38,7 @@ interface CompanyFormDialogProps {
 
 export function CompanyFormDialog({ open, onOpenChange, company, onSave }: CompanyFormDialogProps) {
   const [formData, setFormData] = React.useState<Partial<Company>>({})
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (company) {
@@ -50,9 +51,15 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSave }: Compa
         tags: []
       })
     }
+    setError(null)
   }, [company, open])
 
   const handleSave = () => {
+    if (!formData.name || formData.name.trim() === '') {
+      setError('O nome da empresa é obrigatório.')
+      return
+    }
+    setError(null)
     onSave(formData)
     onOpenChange(false)
   }
@@ -67,6 +74,11 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSave }: Compa
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {error && (
+            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome da Empresa</Label>
