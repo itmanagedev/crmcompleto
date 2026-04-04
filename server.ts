@@ -194,11 +194,15 @@ async function startServer() {
         where: { status: 'open' }
       });
       
-      // expected revenue (sum of open deals values)
+      // expected revenue (sum of open deals values + draft/sent proposals)
       const openDeals = await prisma.deal.findMany({
         where: { status: 'open' }
       });
-      const expectedRevenue = openDeals.reduce((sum, deal) => sum + deal.value, 0);
+      const pendingProposals = await prisma.proposal.findMany({
+        where: { status: { in: ['draft', 'sent'] } }
+      });
+      const expectedRevenue = openDeals.reduce((sum, deal) => sum + deal.value, 0) + 
+                              pendingProposals.reduce((sum, p) => sum + p.totalValue, 0);
 
       // conversion rate (won deals / total deals)
       const totalDeals = await prisma.deal.count();
@@ -454,10 +458,50 @@ async function startServer() {
         { name: 'Rascunho', value: proposals.filter(p => p.status === 'DRAFT').length, color: '#f59e0b' },
       ];
 
+      // Forecast Data (Mocked for now, can be calculated from deals expectedCloseDate)
+      const forecastData = [
+        { month: 'Jan', pessimist: 40000, realist: 55000, optimist: 70000, actual: 52000 },
+        { month: 'Fev', pessimist: 45000, realist: 60000, optimist: 80000, actual: 61000 },
+        { month: 'Mar', pessimist: 50000, realist: 65000, optimist: 85000, actual: 68000 },
+        { month: 'Abr', pessimist: 55000, realist: 75000, optimist: 95000, actual: null },
+        { month: 'Mai', pessimist: 60000, realist: 80000, optimist: 100000, actual: null },
+        { month: 'Jun', pessimist: 65000, realist: 90000, optimist: 110000, actual: null },
+      ];
+
+      // Top Products Data (Extracted from proposals)
+      const productCounts: Record<string, { count: number; revenue: number }> = {};
+      proposals.forEach(p => {
+        if (p.services && Array.isArray(p.services)) {
+          p.services.forEach((s: any) => {
+            if (!productCounts[s.description]) {
+              productCounts[s.description] = { count: 0, revenue: 0 };
+            }
+            productCounts[s.description].count += s.quantity || 1;
+            productCounts[s.description].revenue += (s.quantity || 1) * (s.unitPrice || 0);
+          });
+        }
+      });
+      const topProducts = Object.entries(productCounts)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      // Activity Data (Mocked for now)
+      const activityData = [
+        { name: 'Seg', call: 12, email: 25, meeting: 4, task: 8 },
+        { name: 'Ter', call: 18, email: 32, meeting: 6, task: 12 },
+        { name: 'Qua', call: 15, email: 28, meeting: 5, task: 10 },
+        { name: 'Qui', call: 22, email: 35, meeting: 8, task: 15 },
+        { name: 'Sex', call: 10, email: 20, meeting: 3, task: 5 },
+      ];
+
       res.json({
         funnelData,
         repPerformance,
-        proposalsData
+        proposalsData,
+        forecastData,
+        topProducts,
+        activityData
       });
     } catch (error) {
       console.error("Error generating reports:", error);

@@ -25,32 +25,34 @@ interface ProposalItem {
 
 // --- PDF Styles ---
 const pdfStyles = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', fontSize: 10, color: '#333' },
-  headerContainer: { backgroundColor: '#4b4f58', padding: 30, paddingBottom: 20, flexDirection: 'row', justifyContent: 'space-between', color: '#fff' },
-  headerRight: { textAlign: 'right', fontSize: 9, lineHeight: 1.5 },
-  subHeader: { backgroundColor: '#4f5b93', padding: 10, paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  content: { padding: 30 },
-  mainTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 5, textTransform: 'uppercase' },
-  metaText: { fontSize: 9, color: '#666', marginBottom: 20 },
-  clientBox: { borderLeft: '3px solid #4f5b93', paddingLeft: 10, marginBottom: 30 },
-  clientLabel: { fontSize: 8, fontWeight: 'bold', color: '#4f5b93', textTransform: 'uppercase', marginBottom: 5 },
-  clientName: { fontSize: 12, fontWeight: 'bold', marginBottom: 3 },
-  clientDetails: { fontSize: 9, color: '#666', lineHeight: 1.4 },
-  sectionTitle: { fontSize: 8, fontWeight: 'bold', color: '#4f5b93', textTransform: 'uppercase', marginBottom: 10 },
+  page: { padding: 0, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '30 40', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' },
+  headerRight: { textAlign: 'right', fontSize: 9, color: '#64748b', lineHeight: 1.4 },
+  subHeader: { padding: '15 40', flexDirection: 'row', justifyContent: 'space-between', color: 'white', fontSize: 10, fontWeight: 'bold' },
+  content: { padding: 40 },
+  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#0f172a', marginBottom: 5 },
+  metaText: { fontSize: 9, color: '#64748b', marginBottom: 20 },
+  clientBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 4, marginBottom: 30, borderLeft: '4px solid #2563eb' },
+  clientLabel: { fontSize: 8, fontWeight: 'bold', marginBottom: 5, letterSpacing: 1 },
+  clientName: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 2 },
+  clientDetails: { fontSize: 10, color: '#475569', marginTop: 2 },
+  sectionTitle: { fontSize: 12, fontWeight: 'bold', marginBottom: 15, borderBottom: '1px solid #e2e8f0', paddingBottom: 5 },
   table: { width: '100%', marginBottom: 20 },
-  tableHeader: { flexDirection: 'row', backgroundColor: '#5a5e65', color: '#fff', padding: 8, fontSize: 9, fontWeight: 'bold' },
-  tableRow: { flexDirection: 'row', borderBottom: '1px solid #eee', padding: 8, fontSize: 9, alignItems: 'center' },
-  tableRowSub: { flexDirection: 'row', borderBottom: '1px solid #f5f5f5', padding: 8, paddingLeft: 20, fontSize: 8, color: '#666', alignItems: 'center' },
-  colDesc: { flex: 1 },
-  colQtd: { width: 50, textAlign: 'center' },
-  colPrice: { width: 80, textAlign: 'right' },
-  colDisc: { width: 60, textAlign: 'center' },
-  colTotal: { width: 80, textAlign: 'right', fontWeight: 'bold' },
-  totalBox: { alignSelf: 'flex-end', backgroundColor: '#5a5e65', color: '#fff', padding: 10, width: 250, flexDirection: 'row', justifyContent: 'space-between', fontWeight: 'bold', borderRadius: 4 },
-  conditionsBox: { backgroundColor: '#f9fafb', padding: 15, borderRadius: 4, marginTop: 20, fontSize: 9, lineHeight: 1.5 },
-  signatures: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 60, paddingHorizontal: 20 },
-  signatureLine: { borderTop: '1px solid #ccc', width: 200, paddingTop: 5, textAlign: 'center', fontSize: 8, color: '#666' },
-  footer: { position: 'absolute', bottom: 20, left: 30, right: 30, textAlign: 'center', color: '#999', fontSize: 8, borderTop: '1px solid #eee', paddingTop: 10 }
+  tableHeader: { flexDirection: 'row', borderBottom: '2px solid #e2e8f0', paddingBottom: 8, marginBottom: 8 },
+  tableRow: { flexDirection: 'row', borderBottom: '1px solid #f1f5f9', paddingVertical: 8, alignItems: 'center' },
+  tableRowSub: { flexDirection: 'row', borderBottom: '1px solid #f8fafc', paddingVertical: 6, alignItems: 'center', backgroundColor: '#fafafa' },
+  colDesc: { flex: 4, fontSize: 10, color: '#334155' },
+  colQtd: { flex: 1, fontSize: 10, textAlign: 'center', color: '#475569' },
+  colPrice: { flex: 1.5, fontSize: 10, textAlign: 'right', color: '#475569' },
+  colDisc: { flex: 1, fontSize: 10, textAlign: 'right', color: '#475569' },
+  colTotal: { flex: 1.5, fontSize: 10, textAlign: 'right', fontWeight: 'bold', color: '#0f172a' },
+  totalBox: { flexDirection: 'row', justifyContent: 'space-between', padding: '15 20', backgroundColor: '#f8fafc', borderRadius: 4, marginTop: 10, fontWeight: 'bold', fontSize: 14, color: '#0f172a' },
+  conditionsBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 4, marginTop: 10, fontSize: 9, lineHeight: 1.6, color: '#475569' },
+  signatures: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 60, paddingHorizontal: 20 },
+  signatureBlock: { alignItems: 'center' },
+  signatureLine: { borderTop: '1px solid #94a3b8', width: 200, paddingTop: 8, textAlign: 'center', fontSize: 9, color: '#0f172a', fontWeight: 'bold' },
+  signatureRole: { textAlign: 'center', fontSize: 8, color: '#64748b', marginTop: 2 },
+  footer: { position: 'absolute', bottom: 20, left: 40, right: 40, textAlign: 'center', color: '#94a3b8', fontSize: 8, borderTop: '1px solid #e2e8f0', paddingTop: 10 }
 })
 
 // --- PDF Document Component ---
@@ -59,13 +61,14 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
     <Page size="A4" style={pdfStyles.page}>
       <View style={pdfStyles.headerContainer}>
         <View>
-          {/* Logo placeholder */}
-          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>NEXOCORP</Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: visualData.primaryColor }}>NEXOCORP</Text>
+          <Text style={{ fontSize: 9, color: '#64748b', marginTop: 4 }}>Soluções em Tecnologia</Text>
         </View>
         <View style={pdfStyles.headerRight}>
-          <Text>60.490.491/0001-28</Text>
-          <Text>Avenida Oliveira Paiva, 1206 - Térreo - Fortaleza - CE</Text>
-          <Text>financeiro@nexocorp.com.br</Text>
+          <Text>CNPJ: 60.490.491/0001-28</Text>
+          <Text>Av. Oliveira Paiva, 1206 - Térreo</Text>
+          <Text>Fortaleza - CE, 60822-130</Text>
+          <Text>contato@nexocorp.com.br</Text>
           <Text>www.nexocorp.com.br</Text>
         </View>
       </View>
@@ -77,41 +80,45 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
 
       <View style={pdfStyles.content}>
         <Text style={pdfStyles.mainTitle}>{visualData.title}</Text>
-        <Text style={pdfStyles.metaText}>Emitida em: {new Date().toLocaleDateString('pt-BR')}</Text>
+        <Text style={pdfStyles.metaText}>Data de Emissão: {new Date().toLocaleDateString('pt-BR')}</Text>
 
         <View style={{ ...pdfStyles.clientBox, borderLeftColor: visualData.primaryColor }}>
-          <Text style={{ ...pdfStyles.clientLabel, color: visualData.primaryColor }}>CLIENTE</Text>
+          <Text style={{ ...pdfStyles.clientLabel, color: visualData.primaryColor }}>DADOS DO CLIENTE</Text>
           <Text style={pdfStyles.clientName}>{basicData.company || 'Cliente não informado'}</Text>
-          <Text style={pdfStyles.clientDetails}>{basicData.contact || 'Contato não informado'}</Text>
+          <Text style={pdfStyles.clientDetails}>A/C: {basicData.contact || 'Contato não informado'}</Text>
           {selectedCompany?.cnpj && <Text style={pdfStyles.clientDetails}>CNPJ: {selectedCompany.cnpj}</Text>}
-          {selectedContact?.email && <Text style={pdfStyles.clientDetails}>Email: {selectedContact.email}</Text>}
+          {selectedContact?.email && <Text style={pdfStyles.clientDetails}>E-mail: {selectedContact.email}</Text>}
           {selectedContact?.phone && <Text style={pdfStyles.clientDetails}>Telefone: {selectedContact.phone}</Text>}
         </View>
 
-        <Text style={{ ...pdfStyles.sectionTitle, color: visualData.primaryColor }}>ITENS DA PROPOSTA</Text>
+        <Text style={{ ...pdfStyles.sectionTitle, color: visualData.primaryColor, borderBottomColor: visualData.primaryColor }}>ESCOPO DA PROPOSTA</Text>
         
+        <Text style={{ fontSize: 10, color: '#334155', marginBottom: 15, lineHeight: 1.5 }}>
+          {basicData.message || 'Apresentamos abaixo nossa proposta comercial para os serviços solicitados, elaborada com base nas necessidades identificadas.'}
+        </Text>
+
         <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableHeader}>
-            <Text style={pdfStyles.colDesc}>Descrição</Text>
-            <Text style={pdfStyles.colQtd}>Qtd</Text>
-            <Text style={pdfStyles.colPrice}>Preço Unit.</Text>
-            <Text style={pdfStyles.colDisc}>Desc%</Text>
-            <Text style={pdfStyles.colTotal}>Subtotal</Text>
+          <View style={{...pdfStyles.tableHeader, borderBottomColor: visualData.primaryColor}}>
+            <Text style={{...pdfStyles.colDesc, fontWeight: 'bold', color: visualData.primaryColor}}>Descrição do Item</Text>
+            <Text style={{...pdfStyles.colQtd, fontWeight: 'bold', color: visualData.primaryColor}}>Qtd</Text>
+            <Text style={{...pdfStyles.colPrice, fontWeight: 'bold', color: visualData.primaryColor}}>V. Unitário</Text>
+            <Text style={{...pdfStyles.colDisc, fontWeight: 'bold', color: visualData.primaryColor}}>Desc.</Text>
+            <Text style={{...pdfStyles.colTotal, fontWeight: 'bold', color: visualData.primaryColor}}>V. Total</Text>
           </View>
           
-          {items.map((item: any) => (
+          {items.map((item: any, index: number) => (
             <React.Fragment key={item.id}>
-              <View style={pdfStyles.tableRow}>
-                <Text style={pdfStyles.colDesc}>⊝ {item.description || 'Serviço'}</Text>
-                <Text style={pdfStyles.colQtd}>{item.quantity}</Text>
+              <View style={{...pdfStyles.tableRow, backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc'}}>
+                <Text style={{...pdfStyles.colDesc, fontWeight: 'bold'}}>{item.description || 'Serviço'}</Text>
+                <Text style={pdfStyles.colQtd}>{item.quantity} {item.unit}</Text>
                 <Text style={pdfStyles.colPrice}>R$ {item.unitPrice.toFixed(2)}</Text>
                 <Text style={pdfStyles.colDisc}>{item.discount > 0 ? `${item.discount}%` : '-'}</Text>
                 <Text style={pdfStyles.colTotal}>R$ {((item.quantity * item.unitPrice) * (1 - item.discount / 100)).toFixed(2)}</Text>
               </View>
               {item.subItems && item.subItems.map((sub: any) => (
                 <View style={pdfStyles.tableRowSub} key={sub.id}>
-                  <Text style={pdfStyles.colDesc}>   └ {sub.description || 'Equipamento'}</Text>
-                  <Text style={pdfStyles.colQtd}>{sub.quantity}</Text>
+                  <Text style={{...pdfStyles.colDesc, paddingLeft: 10, color: '#64748b'}}>• {sub.description || 'Equipamento'}</Text>
+                  <Text style={{...pdfStyles.colQtd, color: '#64748b'}}>{sub.quantity} {sub.unit}</Text>
                   <Text style={pdfStyles.colPrice}>-</Text>
                   <Text style={pdfStyles.colDisc}>-</Text>
                   <Text style={pdfStyles.colTotal}>-</Text>
@@ -121,32 +128,49 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
           ))}
         </View>
 
-        <View style={pdfStyles.totalBox}>
-          <Text>TOTAL</Text>
-          <Text>R$ {total.toFixed(2)}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
+          <View style={{ width: 250 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottom: '1px solid #e2e8f0' }}>
+              <Text style={{ fontSize: 10, color: '#64748b' }}>Subtotal:</Text>
+              <Text style={{ fontSize: 10, color: '#0f172a' }}>R$ {subtotal.toFixed(2)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, marginTop: 5 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: visualData.primaryColor }}>VALOR TOTAL:</Text>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: visualData.primaryColor }}>R$ {total.toFixed(2)}</Text>
+            </View>
+          </View>
         </View>
 
-        <Text style={{ ...pdfStyles.sectionTitle, color: visualData.primaryColor, marginTop: 30 }}>CONDIÇÕES COMERCIAIS</Text>
+        <Text style={{ ...pdfStyles.sectionTitle, color: visualData.primaryColor, borderBottomColor: visualData.primaryColor, marginTop: 30 }}>TERMOS E CONDIÇÕES</Text>
         <View style={pdfStyles.conditionsBox}>
-          <Text>OBS: {basicData.observations || 'Nenhuma observação adicional.'}</Text>
-          <Text style={{ marginTop: 5 }}>Pagamento: {visualData.paymentTerms}</Text>
-          <Text>Entrega: {visualData.deliveryTerms}</Text>
+          <Text style={{ fontWeight: 'bold', marginBottom: 4, color: '#0f172a' }}>Condições de Pagamento:</Text>
+          <Text style={{ marginBottom: 8 }}>{visualData.paymentTerms}</Text>
+          
+          <Text style={{ fontWeight: 'bold', marginBottom: 4, color: '#0f172a' }}>Prazo de Entrega/Execução:</Text>
+          <Text style={{ marginBottom: 8 }}>{visualData.deliveryTerms}</Text>
+          
+          {basicData.observations && (
+            <>
+              <Text style={{ fontWeight: 'bold', marginBottom: 4, color: '#0f172a' }}>Observações Adicionais:</Text>
+              <Text>{basicData.observations}</Text>
+            </>
+          )}
         </View>
 
         <View style={pdfStyles.signatures}>
-          <View>
+          <View style={pdfStyles.signatureBlock}>
             <Text style={pdfStyles.signatureLine}>NEXOCORP LTDA - ME</Text>
-            <Text style={{ textAlign: 'center', fontSize: 7, color: '#999' }}>Fornecedor</Text>
+            <Text style={pdfStyles.signatureRole}>Fornecedor</Text>
           </View>
-          <View>
+          <View style={pdfStyles.signatureBlock}>
             <Text style={pdfStyles.signatureLine}>{basicData.company || 'Cliente'}</Text>
-            <Text style={{ textAlign: 'center', fontSize: 7, color: '#999' }}>Cliente</Text>
+            <Text style={pdfStyles.signatureRole}>De Acordo (Cliente)</Text>
           </View>
         </View>
       </View>
 
       <Text style={pdfStyles.footer} render={({ pageNumber, totalPages }) => (
-        `Proposta Comercial gerada pelo CRM Pro - Página ${pageNumber} de ${totalPages}`
+        `Documento gerado eletronicamente - Página ${pageNumber} de ${totalPages}`
       )} fixed />
     </Page>
   </Document>
@@ -758,62 +782,86 @@ export function NewProposal() {
                 <div className="w-full max-w-[600px] bg-white shadow-xl rounded-sm p-10 aspect-[1/1.4] scale-[0.85] origin-top">
                   <div className="flex justify-between items-start mb-12 border-b pb-6" style={{ borderColor: visualData.primaryColor }}>
                     <div>
-                      <h1 className="text-3xl font-bold" style={{ color: visualData.primaryColor }}>{visualData.title}</h1>
-                      <p className="text-sm text-gray-500 mt-2 font-semibold">Para: {basicData.company || 'Empresa Cliente'}</p>
-                      <p className="text-sm text-gray-500">{basicData.contact || 'Contato não informado'}</p>
-                      {companies.find(c => c.name === basicData.company)?.cnpj && <p className="text-sm text-gray-500">CNPJ: {companies.find(c => c.name === basicData.company)?.cnpj}</p>}
-                      {contacts.find(c => c.name === basicData.contact)?.email && <p className="text-sm text-gray-500">Email: {contacts.find(c => c.name === basicData.contact)?.email}</p>}
-                      {contacts.find(c => c.name === basicData.contact)?.phone && <p className="text-sm text-gray-500">Telefone: {contacts.find(c => c.name === basicData.contact)?.phone}</p>}
+                      <h1 className="text-3xl font-bold" style={{ color: visualData.primaryColor }}>NEXOCORP</h1>
+                      <p className="text-xs text-gray-500 mt-1">Soluções em Tecnologia</p>
                     </div>
-                    <div className="text-right text-sm text-gray-500">
-                      <p>Data: {new Date().toLocaleDateString('pt-BR')}</p>
-                      <p>Validade: {basicData.validUntil ? new Date(basicData.validUntil).toLocaleDateString('pt-BR') : '-'}</p>
+                    <div className="text-right text-xs text-gray-500 space-y-1">
+                      <p>CNPJ: 60.490.491/0001-28</p>
+                      <p>Av. Oliveira Paiva, 1206 - Térreo</p>
+                      <p>Fortaleza - CE, 60822-130</p>
+                      <p>contato@nexocorp.com.br</p>
                     </div>
                   </div>
-                  <div className="mb-8 text-sm text-gray-700 leading-relaxed">
-                    {basicData.message || 'Apresentamos nossa proposta comercial para os serviços solicitados.'}
+                  
+                  <div className="mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-1">{visualData.title}</h2>
+                    <p className="text-xs text-gray-500">Data de Emissão: {new Date().toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <table className="w-full text-sm mb-8">
+
+                  <div className="mb-8 p-4 bg-gray-50 rounded border-l-4" style={{ borderColor: visualData.primaryColor }}>
+                    <h3 className="text-xs font-bold mb-2 tracking-wider" style={{ color: visualData.primaryColor }}>DADOS DO CLIENTE</h3>
+                    <p className="font-bold text-gray-900">{basicData.company || 'Cliente não informado'}</p>
+                    <p className="text-sm text-gray-600 mt-1">A/C: {basicData.contact || 'Contato não informado'}</p>
+                    {companies.find(c => c.name === basicData.company)?.cnpj && <p className="text-sm text-gray-600">CNPJ: {companies.find(c => c.name === basicData.company)?.cnpj}</p>}
+                    {contacts.find(c => c.name === basicData.contact)?.email && <p className="text-sm text-gray-600">E-mail: {contacts.find(c => c.name === basicData.contact)?.email}</p>}
+                  </div>
+
+                  <h3 className="text-sm font-bold mb-4 border-b pb-2" style={{ color: visualData.primaryColor, borderColor: visualData.primaryColor }}>ESCOPO DA PROPOSTA</h3>
+                  
+                  <p className="text-xs text-gray-700 mb-6 leading-relaxed">
+                    {basicData.message || 'Apresentamos abaixo nossa proposta comercial para os serviços solicitados, elaborada com base nas necessidades identificadas.'}
+                  </p>
+
+                  <table className="w-full text-xs mb-8">
                     <thead className="text-left border-b-2" style={{ borderColor: visualData.primaryColor }}>
                       <tr>
-                        <th className="py-2">Item</th>
-                        <th className="py-2 text-center">Qtd</th>
-                        <th className="py-2 text-right">Valor</th>
+                        <th className="py-2 font-bold" style={{ color: visualData.primaryColor }}>Descrição do Item</th>
+                        <th className="py-2 text-center font-bold" style={{ color: visualData.primaryColor }}>Qtd</th>
+                        <th className="py-2 text-right font-bold" style={{ color: visualData.primaryColor }}>V. Unitário</th>
+                        <th className="py-2 text-right font-bold" style={{ color: visualData.primaryColor }}>V. Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map(item => (
+                      {items.map((item, index) => (
                         <React.Fragment key={item.id}>
-                          <tr className="border-b border-gray-100">
-                            <td className="py-3 font-medium">{item.description || 'Item sem descrição'}</td>
-                            <td className="py-3 text-center">{item.quantity} {item.unit}</td>
-                            <td className="py-3 text-right">R$ {((item.quantity * item.unitPrice) * (1 - item.discount / 100)).toFixed(2)}</td>
+                          <tr className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                            <td className="py-3 font-bold text-gray-900 px-2">{item.description || 'Item sem descrição'}</td>
+                            <td className="py-3 text-center text-gray-600">{item.quantity} {item.unit}</td>
+                            <td className="py-3 text-right text-gray-600">R$ {item.unitPrice.toFixed(2)}</td>
+                            <td className="py-3 text-right font-bold text-gray-900 pr-2">R$ {((item.quantity * item.unitPrice) * (1 - item.discount / 100)).toFixed(2)}</td>
                           </tr>
                           {item.subItems && item.subItems.map(sub => (
-                            <tr key={sub.id} className="border-b border-gray-50 text-gray-500 text-xs">
-                              <td className="py-2 pl-4">└ {sub.description || 'Equipamento'}</td>
+                            <tr key={sub.id} className="border-b border-gray-50 text-gray-500 text-xs bg-gray-50/50">
+                              <td className="py-2 pl-6">• {sub.description || 'Equipamento'}</td>
                               <td className="py-2 text-center">{sub.quantity} {sub.unit}</td>
-                              <td className="py-2 text-right">R$ {((sub.quantity * sub.unitPrice) * (1 - sub.discount / 100)).toFixed(2)}</td>
+                              <td className="py-2 text-right">-</td>
+                              <td className="py-2 text-right pr-2">-</td>
                             </tr>
                           ))}
                         </React.Fragment>
                       ))}
                     </tbody>
                   </table>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end mb-8">
                     <div className="w-64 space-y-2 text-sm">
-                      <div className="flex justify-between"><span>Subtotal:</span><span>R$ {subtotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-gray-600"><span>Subtotal:</span><span>R$ {subtotal.toFixed(2)}</span></div>
                       <div className="flex justify-between font-bold text-lg pt-2 border-t" style={{ color: visualData.primaryColor }}>
-                        <span>Total:</span><span>R$ {total.toFixed(2)}</span>
+                        <span>VALOR TOTAL:</span><span>R$ {total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
-                  {basicData.observations && (
-                    <div className="mt-8 text-sm text-gray-700 leading-relaxed">
-                      <h4 className="font-bold mb-2">Observações:</h4>
-                      <p>{basicData.observations}</p>
+                  
+                  <h3 className="text-sm font-bold mb-4 border-b pb-2" style={{ color: visualData.primaryColor, borderColor: visualData.primaryColor }}>TERMOS E CONDIÇÕES</h3>
+                  <div className="text-xs text-gray-700 space-y-3 bg-gray-50 p-4 rounded">
+                    <div>
+                      <span className="font-bold text-gray-900">Condições de Pagamento: </span>
+                      {visualData.paymentTerms}
                     </div>
-                  )}
+                    <div>
+                      <span className="font-bold text-gray-900">Prazo de Entrega/Execução: </span>
+                      {visualData.deliveryTerms}
+                    </div>
+                  </div>
                 </div>
               </div>
               

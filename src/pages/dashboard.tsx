@@ -171,7 +171,7 @@ export function Dashboard() {
                 </p>
                 <div className="h-8 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={kpiData.openDeals.history.map((val, i) => ({ val, i }))}>
+                    <LineChart data={kpiData.openDeals.history.map((val: number, i: number) => ({ val, i }))}>
                       <Line type="monotone" dataKey="val" stroke="#2563eb" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -209,7 +209,7 @@ export function Dashboard() {
                 </p>
                 <div className="h-8 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={kpiData.expectedRevenue.history.map((val, i) => ({ val, i }))}>
+                    <LineChart data={kpiData.expectedRevenue.history.map((val: number, i: number) => ({ val, i }))}>
                       <Line type="monotone" dataKey="val" stroke="#10b981" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -247,7 +247,7 @@ export function Dashboard() {
                 </p>
                 <div className="h-8 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={kpiData.conversionRate.history.map((val, i) => ({ val, i }))}>
+                    <LineChart data={kpiData.conversionRate.history.map((val: number, i: number) => ({ val, i }))}>
                       <Line type="monotone" dataKey="val" stroke="#f59e0b" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -285,7 +285,7 @@ export function Dashboard() {
                 </p>
                 <div className="h-8 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={kpiData.pendingActivities.history.map((val, i) => ({ val, i }))}>
+                    <LineChart data={kpiData.pendingActivities.history.map((val: number, i: number) => ({ val, i }))}>
                       <Line type="monotone" dataKey="val" stroke="#a855f7" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>

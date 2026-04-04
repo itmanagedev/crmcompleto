@@ -8,13 +8,7 @@ import { Button } from "@/src/components/ui/button"
 import { cn } from "@/src/lib/utils"
 import * as XLSX from 'xlsx'
 
-// --- Mock Data ---
-
-
-  const FORECAST_DATA: any[] = []
-  const ACTIVITY_DATA: any[] = []
-  const LEAD_SOURCE_DATA: any[] = []
-  const TOP_PRODUCTS: any[] = []
+// --- Helper Functions ---
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value)
@@ -63,6 +57,9 @@ export function Reports() {
   const FUNNEL_DATA = reportData.funnelData || []
   const REP_PERFORMANCE = reportData.repPerformance || []
   const PROPOSALS_DATA = reportData.proposalsData || []
+  const FORECAST_DATA = reportData.forecastData || []
+  const ACTIVITY_DATA = reportData.activityData || []
+  const TOP_PRODUCTS = reportData.topProducts || []
 
   const renderReportContent = () => {
     switch (activeReport) {
