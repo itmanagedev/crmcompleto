@@ -291,7 +291,7 @@ export function NewProposal() {
   
   // Form State
   const [basicData, setBasicData] = React.useState({
-    company: '', contact: '', dealId: '', validUntil: '', currency: 'BRL', globalDiscount: 0, message: '', observations: ''
+    company: '', contact: '', dealId: '', stage: 'prospeccao', validUntil: '', currency: 'BRL', globalDiscount: 0, message: '', observations: ''
   })
   
   const [items, setItems] = React.useState<ProposalItem[]>([
@@ -375,6 +375,7 @@ export function NewProposal() {
             company: data.companyName || '',
             contact: data.contactName || '',
             dealId: data.dealId || 'none',
+            stage: data.deal?.stage || 'prospeccao',
             validUntil: data.validUntil ? new Date(data.validUntil).toISOString().split('T')[0] : '',
             currency: 'BRL',
             globalDiscount: 0,
@@ -486,6 +487,7 @@ export function NewProposal() {
         title: visualData.title,
         templateId: visualData.template === 'modern' ? null : visualData.template,
         dealId: basicData.dealId && basicData.dealId !== 'none' ? basicData.dealId : null,
+        stage: basicData.stage,
         companyName: basicData.company,
         contactName: basicData.contact,
         validUntil: basicData.validUntil,
@@ -598,13 +600,34 @@ export function NewProposal() {
               </div>
               <div className="space-y-2">
                 <Label>Vincular a um Deal (Opcional)</Label>
-                <Select value={basicData.dealId} onValueChange={(v) => setBasicData({...basicData, dealId: v})}>
+                <Select value={basicData.dealId} onValueChange={(v) => {
+                  const selectedDeal = deals.find(d => d.id === v);
+                  setBasicData({
+                    ...basicData, 
+                    dealId: v, 
+                    stage: selectedDeal ? selectedDeal.stage : basicData.stage
+                  });
+                }}>
                   <SelectTrigger><SelectValue placeholder="Selecione o deal" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
                     {deals.map(deal => (
                       <SelectItem key={deal.id} value={deal.id}>{deal.title}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Estágio no Pipeline</Label>
+                <Select value={basicData.stage} onValueChange={(v) => setBasicData({...basicData, stage: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="prospeccao">Prospecção</SelectItem>
+                    <SelectItem value="qualificacao">Qualificação</SelectItem>
+                    <SelectItem value="enviada">Enviada</SelectItem>
+                    <SelectItem value="negociacao">Negociação</SelectItem>
+                    <SelectItem value="ganho">Ganho</SelectItem>
+                    <SelectItem value="perdido">Perdido</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

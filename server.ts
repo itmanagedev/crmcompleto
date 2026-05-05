@@ -807,7 +807,7 @@ async function startServer() {
           data: {
             title: title || "Proposta Comercial",
             value: totalValue ? Number(totalValue) : 0,
-            stage: "negociacao",
+            stage: req.body.stage || "prospeccao",
             companyName: companyName || "N/A",
             status: "open",
             probability: 50
@@ -815,10 +815,13 @@ async function startServer() {
         });
         activeDealId = newDeal.id;
       } else {
-        // Atualiza o deal existente com o novo valor da proposta
+        // Atualiza o deal existente com o novo valor da proposta e estágio
         await prisma.deal.update({
           where: { id: activeDealId },
-          data: { value: totalValue ? Number(totalValue) : undefined }
+          data: { 
+            value: totalValue ? Number(totalValue) : undefined,
+            stage: req.body.stage ? req.body.stage : undefined
+          }
         });
       }
 
@@ -906,7 +909,7 @@ async function startServer() {
   app.put("/api/proposals/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
+      const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message, stage } = req.body;
       
       const updateData: any = {};
       
@@ -930,12 +933,14 @@ async function startServer() {
         data: updateData
       });
 
-      // Update deal stage based on proposal status
+      // Update deal stage based on proposal status or explicit stage
       if (proposal.dealId) {
-        let newStage = null;
-        if (status === 'SENT' || status === 'sent') newStage = 'enviada';
-        else if (status === 'ACCEPTED' || status === 'accepted') newStage = 'ganho';
-        else if (status === 'REJECTED' || status === 'rejected') newStage = 'perdido';
+        let newStage = stage || null;
+        if (!newStage) {
+          if (status === 'SENT' || status === 'sent') newStage = 'enviada';
+          else if (status === 'ACCEPTED' || status === 'accepted') newStage = 'ganho';
+          else if (status === 'REJECTED' || status === 'rejected') newStage = 'perdido';
+        }
 
         const dealUpdateData: any = {};
         if (newStage) dealUpdateData.stage = newStage;
