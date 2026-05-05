@@ -800,16 +800,38 @@ async function startServer() {
       const { dealId, totalValue, observations, services, status, templateId, title, companyName, contactName, validUntil, message } = req.body;
       const linkHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
+      let activeDealId = dealId;
+
+      if (!activeDealId) {
+        const newDeal = await prisma.deal.create({
+          data: {
+            title: title || "Proposta Comercial",
+            value: totalValue ? Number(totalValue) : 0,
+            stage: "negociacao",
+            companyName: companyName || "N/A",
+            status: "open",
+            probability: 50
+          }
+        });
+        activeDealId = newDeal.id;
+      } else {
+        // Atualiza o deal existente com o novo valor da proposta
+        await prisma.deal.update({
+          where: { id: activeDealId },
+          data: { value: totalValue ? Number(totalValue) : undefined }
+        });
+      }
+
       const proposal = await prisma.proposal.create({
         data: {
           title: title || "Proposta Comercial",
-          dealId,
+          dealId: activeDealId,
           templateId,
           companyName,
           contactName,
           validUntil: validUntil ? new Date(validUntil) : null,
           message,
-          totalValue,
+          totalValue: totalValue ? Number(totalValue) : 0,
           observations,
           services,
           status,
@@ -909,16 +931,20 @@ async function startServer() {
       });
 
       // Update deal stage based on proposal status
-      if (status && proposal.dealId) {
+      if (proposal.dealId) {
         let newStage = null;
-        if (status === 'SENT') newStage = 'enviada';
-        else if (status === 'ACCEPTED') newStage = 'ganho';
-        else if (status === 'REJECTED') newStage = 'perdido';
+        if (status === 'SENT' || status === 'sent') newStage = 'enviada';
+        else if (status === 'ACCEPTED' || status === 'accepted') newStage = 'ganho';
+        else if (status === 'REJECTED' || status === 'rejected') newStage = 'perdido';
 
-        if (newStage) {
+        const dealUpdateData: any = {};
+        if (newStage) dealUpdateData.stage = newStage;
+        if (totalValue !== undefined) dealUpdateData.value = Number(totalValue);
+
+        if (Object.keys(dealUpdateData).length > 0) {
           await prisma.deal.update({
             where: { id: proposal.dealId },
-            data: { stage: newStage }
+            data: dealUpdateData
           });
         }
       }
@@ -994,6 +1020,13 @@ async function startServer() {
         data: { status: 'sent' }
       });
 
+      if (updatedProposal.dealId) {
+        await prisma.deal.update({
+          where: { id: updatedProposal.dealId },
+          data: { stage: 'enviada' }
+        });
+      }
+
       res.json(updatedProposal);
     } catch (error) {
       console.error("Error sending proposal email:", error);
@@ -1006,13 +1039,13 @@ async function startServer() {
       const { id } = req.params;
       const proposal = await prisma.proposal.update({
         where: { id },
-        data: { status: 'ACCEPTED' }
+        data: { status: 'accepted' }
       });
       
       if (proposal.dealId) {
         await prisma.deal.update({
           where: { id: proposal.dealId },
-          data: { status: 'WON', stage: 'ganho' }
+          data: { status: 'won', stage: 'ganho' }
         });
       }
       
@@ -1028,13 +1061,13 @@ async function startServer() {
       const { id } = req.params;
       const proposal = await prisma.proposal.update({
         where: { id },
-        data: { status: 'REJECTED' }
+        data: { status: 'rejected' }
       });
 
       if (proposal.dealId) {
         await prisma.deal.update({
           where: { id: proposal.dealId },
-          data: { status: 'LOST', stage: 'perdido' }
+          data: { status: 'lost', stage: 'perdido' }
         });
       }
 

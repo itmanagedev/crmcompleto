@@ -526,7 +526,7 @@ export function NewProposal() {
             alert(`Proposta salva, mas houve um erro ao enviar o e-mail: ${errorData.error || 'Erro desconhecido'}`)
           }
         } else {
-          if (status === 'SENT') {
+          if (status === 'sent') {
             const hash = proposal.linkHash || proposal.id
             const link = `${window.location.origin}/p/${hash}`
             try {
@@ -950,7 +950,7 @@ export function NewProposal() {
                         </div>
                         <DialogFooterUI>
                           <Button variant="outline">Agendar Envio</Button>
-                          <Button onClick={() => handleSaveProposal('SENT', true)} disabled={isSaving}>
+                          <Button onClick={() => handleSaveProposal('sent', true)} disabled={isSaving}>
                             {isSaving ? 'Enviando...' : 'Enviar Agora'}
                           </Button>
                         </DialogFooterUI>
@@ -958,7 +958,7 @@ export function NewProposal() {
                     </Dialog>
                     
                     <div className="pt-4 border-t flex gap-2">
-                      <Button variant="outline" className="flex-1" onClick={() => handleSaveProposal('DRAFT', false)} disabled={isSaving}>
+                      <Button variant="outline" className="flex-1" onClick={() => handleSaveProposal('draft', false)} disabled={isSaving}>
                         Salvar Rascunho
                       </Button>
                     </div>
@@ -1022,7 +1022,7 @@ export function NewProposal() {
           Voltar
         </Button>
         <div className="flex gap-2">
-          <Button variant="ghost" className="hidden sm:flex" onClick={() => handleSaveProposal('DRAFT', false)} disabled={isSaving}>
+          <Button variant="ghost" className="hidden sm:flex" onClick={() => handleSaveProposal('draft', false)} disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" /> Salvar Rascunho
           </Button>
           {currentStep < 4 ? (
@@ -1030,7 +1030,7 @@ export function NewProposal() {
               Próximo Passo <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={() => handleSaveProposal('SENT', false)} disabled={isSaving}>
+            <Button onClick={() => handleSaveProposal('sent', false)} disabled={isSaving}>
               <Check className="w-4 h-4 mr-2" /> Finalizar
             </Button>
           )}

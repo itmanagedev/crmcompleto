@@ -284,10 +284,10 @@ export function ProposalsList() {
           const res = await fetch(`/api/proposals/${id}`, { 
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'SENT' })
+            body: JSON.stringify({ status: 'sent' })
           })
           if (res.ok) {
-            setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'SENT' } : p))
+            setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'sent' } : p))
             try {
               if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(url)
@@ -324,7 +324,7 @@ export function ProposalsList() {
       try {
         const res = await fetch(`/api/proposals/${id}/accept`, { method: 'POST' })
         if (res.ok) {
-          setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'ACCEPTED' } : p))
+          setProposals(prev => prev.map(p => p.id === id ? { ...p, status: 'accepted' } : p))
         }
       } catch (error) {
         console.error("Error accepting proposal:", error)
@@ -441,7 +441,7 @@ export function ProposalsList() {
                           <DropdownMenuItem className="cursor-pointer" onClick={() => handleAction(proposal.id, 'send')}>
                             <Send className="h-4 w-4 mr-2" /> Enviar (Gerar link de autorização)
                           </DropdownMenuItem>
-                          {proposal.status !== 'ACCEPTED' && (
+                          {proposal.status !== 'accepted' && (
                             <DropdownMenuItem className="cursor-pointer text-emerald-600" onClick={() => handleAction(proposal.id, 'accept')}>
                               <Check className="h-4 w-4 mr-2" /> Marcar como Aceita
                             </DropdownMenuItem>

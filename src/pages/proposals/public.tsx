@@ -186,7 +186,7 @@ export default function PublicProposalView() {
     try {
       const res = await fetch(`/api/proposals/${proposal.id}/${action}`, { method: 'POST' });
       if (res.ok) {
-        setProposal({ ...proposal, status: action === 'accept' ? 'ACCEPTED' : 'REJECTED' });
+        setProposal({ ...proposal, status: action === 'accept' ? 'accepted' : 'rejected' });
         alert(`Proposta ${action === 'accept' ? 'aceita' : 'recusada'} com sucesso!`);
       } else {
         alert('Erro ao processar ação');
@@ -237,17 +237,17 @@ export default function PublicProposalView() {
                 <CardTitle className="text-2xl">Detalhes da Proposta</CardTitle>
                 <CardDescription>Referência: {proposal.id}</CardDescription>
               </div>
-              {proposal.status === 'ACCEPTED' && (
+              {proposal.status === 'accepted' && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                   <CheckCircle2 className="w-4 h-4 mr-2" /> Aceita
                 </span>
               )}
-              {proposal.status === 'REJECTED' && (
+              {proposal.status === 'rejected' && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                   <XCircle className="w-4 h-4 mr-2" /> Recusada
                 </span>
               )}
-              {proposal.status === 'SENT' && (
+              {proposal.status === 'sent' && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                   Aguardando Resposta
                 </span>
@@ -317,7 +317,7 @@ export default function PublicProposalView() {
             )}
 
             {/* Actions */}
-            {proposal.status === 'SENT' && (
+            {proposal.status === 'sent' && (
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 border-t">
                 <Button 
                   size="lg" 
