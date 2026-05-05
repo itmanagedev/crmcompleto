@@ -57,67 +57,172 @@ const getStatusBadge = (status: Proposal['status']) => {
 
 // --- PDF Styles ---
 const pdfStyles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#333' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #3b82f6', paddingBottom: 10 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#3b82f6' },
-  subtitle: { fontSize: 12, color: '#666', marginTop: 4 },
-  section: { marginBottom: 20 },
-  table: { width: '100%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderRightWidth: 0, borderBottomWidth: 0 },
-  tableRow: { flexDirection: 'row' },
-  tableColHeader: { width: '75%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, backgroundColor: '#f9fafb', padding: 5, fontWeight: 'bold' },
-  tableColHeaderValue: { width: '25%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, backgroundColor: '#f9fafb', padding: 5, fontWeight: 'bold' },
-  tableCol: { width: '75%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, padding: 5 },
-  tableColValue: { width: '25%', borderStyle: 'solid', borderWidth: 1, borderColor: '#eee', borderLeftWidth: 0, borderTopWidth: 0, padding: 5 },
-  totals: { marginTop: 20, alignItems: 'flex-end' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', width: 200, marginBottom: 5 },
-  totalLabel: { fontWeight: 'bold' },
-  totalValue: { textAlign: 'right' },
-  finalTotal: { fontSize: 14, fontWeight: 'bold', color: '#3b82f6', marginTop: 5, borderTop: '1px solid #eee', paddingTop: 5 },
-  footer: { position: 'absolute', bottom: 30, left: 40, right: 40, textAlign: 'center', color: '#999', fontSize: 8, borderTop: '1px solid #eee', paddingTop: 10 }
+  page: { padding: 0, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '20 40', backgroundColor: '#475569' },
+  headerLogoText: { fontSize: 24, fontWeight: 'bold', color: '#ffffff' },
+  headerRight: { textAlign: 'right', fontSize: 8, color: '#e2e8f0', lineHeight: 1.4 },
+  
+  subHeader: { padding: '8 40', flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#6366f1' },
+  subHeaderText: { color: '#ffffff', fontSize: 10, fontWeight: 'bold' },
+  
+  content: { padding: '30 40' },
+  mainTitle: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4, textTransform: 'uppercase' },
+  metaText: { fontSize: 9, color: '#64748b', marginBottom: 25 },
+  
+  twoCols: { flexDirection: 'row', gap: 20, marginBottom: 25 },
+  boxCol: { flex: 1, backgroundColor: '#f8fafc', padding: 15, borderLeft: '2px solid #cbd5e1' },
+  boxColTitle: { fontSize: 8, color: '#64748b', fontWeight: 'bold', marginBottom: 10, textTransform: 'uppercase' },
+  boxColHighlight: { fontSize: 12, fontWeight: 'bold', color: '#0f172a', marginBottom: 4, textTransform: 'uppercase' },
+  boxColText: { fontSize: 9, color: '#475569', marginBottom: 2 },
+  
+  sectionTitle: { fontSize: 10, fontWeight: 'bold', color: '#6366f1', marginBottom: 10, textTransform: 'uppercase' },
+  
+  table: { width: '100%', marginBottom: 20 },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#475569', padding: '8 10', alignItems: 'center' },
+  tableHeaderItem: { color: '#ffffff', fontSize: 9, fontWeight: 'bold' },
+  tableRow: { flexDirection: 'row', borderBottom: '1px solid #f1f5f9', padding: '8 10', alignItems: 'center' },
+  tableRowSub: { flexDirection: 'row', padding: '4 10', paddingLeft: 20, alignItems: 'center' },
+  
+  colDesc: { flex: 4, fontSize: 9, color: '#334155', fontWeight: 'bold' },
+  colDescSub: { flex: 4, fontSize: 8, color: '#64748b' },
+  colQtd: { flex: 1, fontSize: 9, textAlign: 'center', color: '#475569' },
+  colPrice: { flex: 1.5, fontSize: 9, textAlign: 'right', color: '#475569' },
+  colDisc: { flex: 1, fontSize: 9, textAlign: 'right', color: '#475569' },
+  colTotal: { flex: 1.5, fontSize: 9, textAlign: 'right', color: '#334155' },
+  
+  totalsContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 5 },
+  totalBox: { backgroundColor: '#475569', padding: '10 20', borderRadius: 2, flexDirection: 'row', gap: 30, alignItems: 'center' },
+  totalBoxLabel: { color: '#ffffff', fontSize: 10, fontWeight: 'bold' },
+  totalBoxValue: { color: '#ffffff', fontSize: 14, fontWeight: 'bold' },
+  
+  conditionsBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 2, fontSize: 9, color: '#475569', lineHeight: 1.5 },
+  
+  signatures: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 50, paddingHorizontal: 30 },
+  signatureBlock: { alignItems: 'center', width: 200 },
+  signatureLine: { borderTop: '1px solid #94a3b8', width: '100%', paddingTop: 8, textAlign: 'center', fontSize: 9, color: '#0f172a', textTransform: 'uppercase' },
+  signatureRole: { textAlign: 'center', fontSize: 8, color: '#64748b', marginTop: 2 },
+  
+  footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 10 },
+  footerText: { color: '#94a3b8', fontSize: 7 }
 })
 
-const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => (
-  <Document>
-    <Page size="A4" style={pdfStyles.page}>
-      <View style={pdfStyles.header}>
-        <View>
-          <Text style={pdfStyles.title}>{proposal.title}</Text>
-          <Text style={pdfStyles.subtitle}>Para: {proposal.companyName || 'Cliente não informado'}</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text>Data: {new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</Text>
-          <Text>Validade: {proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : new Date(new Date(proposal.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}</Text>
-        </View>
-      </View>
+const SimpleProposalPDF = ({ proposal }: { proposal: Proposal }) => {
+  const primaryColor = '#6366f1';
+  let services: any[] = [];
+  try {
+    services = proposal.services ? (typeof proposal.services === 'string' ? JSON.parse(proposal.services) : proposal.services) : [];
+  } catch(e) {
+    console.error(e);
+  }
 
-      <View style={pdfStyles.section}>
-        <Text>Apresentamos nossa proposta comercial para os serviços solicitados.</Text>
-      </View>
-
-      <View style={pdfStyles.table}>
-        <View style={pdfStyles.tableRow}>
-          <View style={pdfStyles.tableColHeader}><Text>Descrição</Text></View>
-          <View style={pdfStyles.tableColHeaderValue}><Text>Valor Total</Text></View>
+  return (
+    <Document>
+      <Page size="A4" style={pdfStyles.page}>
+        <View style={pdfStyles.headerContainer}>
+          <Text style={pdfStyles.headerLogoText}>NEXOCORP</Text>
+          <View style={pdfStyles.headerRight}>
+            <Text>60.490.491/0001-28</Text>
+            <Text>Av. Oliveira Paiva, 1206 - Térreo - Cidade dos Funcionários - Fortaleza - CE</Text>
+            <Text>financeiro@nexocorp.com.br</Text>
+            <Text>www.nexocorp.com.br</Text>
+          </View>
         </View>
-        <View style={pdfStyles.tableRow}>
-          <View style={pdfStyles.tableCol}><Text>{proposal.title}</Text></View>
-          <View style={pdfStyles.tableColValue}><Text>R$ {(proposal.totalValue || 0).toFixed(2)}</Text></View>
-        </View>
-      </View>
 
-      <View style={pdfStyles.totals}>
-        <View style={pdfStyles.totalRow}>
-          <Text style={pdfStyles.totalLabel}>Total Final:</Text>
-          <Text style={{ ...pdfStyles.totalValue, ...pdfStyles.finalTotal }}>R$ {(proposal.totalValue || 0).toFixed(2)}</Text>
+        <View style={{ ...pdfStyles.subHeader, backgroundColor: primaryColor }}>
+          <Text style={pdfStyles.subHeaderText}>PROPOSTA COMERCIAL #{proposal.id.substring(0, 8).toUpperCase()}</Text>
+          <Text style={pdfStyles.subHeaderText}>Válida até {proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '-'}</Text>
         </View>
-      </View>
 
-      <Text style={pdfStyles.footer} render={({ pageNumber, totalPages }) => (
-        `Proposta Comercial gerada pelo CRM Pro - Página ${pageNumber} de ${totalPages}`
-      )} fixed />
-    </Page>
-  </Document>
-)
+        <View style={pdfStyles.content}>
+          <Text style={pdfStyles.mainTitle}>{proposal.title || 'PROPOSTA COMERCIAL'}</Text>
+          <Text style={pdfStyles.metaText}>Emitida em: {new Date(proposal.createdAt).toLocaleDateString('pt-BR')} • Vendedor: {proposal.contactName || 'Consultor'}</Text>
+
+          <View style={pdfStyles.twoCols}>
+            <View style={{ ...pdfStyles.boxCol, borderLeftColor: primaryColor }}>
+              <Text style={pdfStyles.boxColTitle}>CLIENTE</Text>
+              <Text style={pdfStyles.boxColHighlight}>{proposal.companyName || 'Cliente não informado'}</Text>
+              <Text style={pdfStyles.boxColText}>A/C: {proposal.contactName || 'Não informado'}</Text>
+            </View>
+            <View style={{ ...pdfStyles.boxCol, borderLeftColor: primaryColor }}>
+              <Text style={pdfStyles.boxColTitle}>PAGAMENTO</Text>
+              <Text style={pdfStyles.boxColText}>Forma: PIX</Text>
+              <Text style={pdfStyles.boxColText}>TBD Conforme Proposta</Text>
+            </View>
+          </View>
+
+          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor }}>ITENS DA PROPOSTA</Text>
+
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.tableHeader}>
+              <Text style={{ ...pdfStyles.colDesc, color: '#ffffff' }}>Descrição</Text>
+              <Text style={{ ...pdfStyles.colQtd, color: '#ffffff' }}>Qtd</Text>
+              <Text style={{ ...pdfStyles.colPrice, color: '#ffffff' }}>Preço Unit.</Text>
+              <Text style={{ ...pdfStyles.colDisc, color: '#ffffff' }}>Desc%</Text>
+              <Text style={{ ...pdfStyles.colTotal, color: '#ffffff' }}>Subtotal</Text>
+            </View>
+            
+            {services && services.length > 0 ? services.map((item: any, index: number) => (
+              <React.Fragment key={item.id || index}>
+                <View style={{ ...pdfStyles.tableRow, backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                  <Text style={pdfStyles.colDesc}>{item.description || 'Serviço'}</Text>
+                  <Text style={pdfStyles.colQtd}>{item.quantity}</Text>
+                  <Text style={pdfStyles.colPrice}>R$ {parseFloat(item.unitPrice || 0).toFixed(2)}</Text>
+                  <Text style={pdfStyles.colDisc}>{item.discount > 0 ? `${item.discount}%` : '-'}</Text>
+                  <Text style={pdfStyles.colTotal}>R$ {((item.quantity * (item.unitPrice || 0)) * (1 - (item.discount || 0) / 100)).toFixed(2)}</Text>
+                </View>
+                {item.subItems && item.subItems.map((sub: any, subIndex: number) => (
+                  <View style={pdfStyles.tableRowSub} key={sub.id || subIndex}>
+                    <Text style={pdfStyles.colDescSub}>└ {sub.description || 'Equipamento'}</Text>
+                    <Text style={pdfStyles.colQtd}>{sub.quantity}</Text>
+                    <Text style={pdfStyles.colPrice}>R$ 0,00</Text>
+                    <Text style={pdfStyles.colDisc}>-</Text>
+                    <Text style={pdfStyles.colTotal}>R$ 0,00</Text>
+                  </View>
+                ))}
+              </React.Fragment>
+            )) : (
+              <View style={pdfStyles.tableRow}>
+                <Text style={pdfStyles.colDesc}>{proposal.title || 'Serviço'}</Text>
+                <Text style={pdfStyles.colQtd}>1</Text>
+                <Text style={pdfStyles.colPrice}>R$ {(proposal.totalValue || 0).toFixed(2)}</Text>
+                <Text style={pdfStyles.colDisc}>-</Text>
+                <Text style={pdfStyles.colTotal}>R$ {(proposal.totalValue || 0).toFixed(2)}</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={pdfStyles.totalsContainer}>
+            <View style={pdfStyles.totalBox}>
+              <Text style={pdfStyles.totalBoxLabel}>TOTAL</Text>
+              <Text style={pdfStyles.totalBoxValue}>R$ {parseFloat((proposal.totalValue || 0).toString()).toFixed(2)}</Text>
+            </View>
+          </View>
+
+          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor, marginTop: 30 }}>CONDIÇÕES COMERCIAIS</Text>
+          <View style={pdfStyles.conditionsBox}>
+            <Text>{proposal.observations || 'EM CASO DE ACEITE, PRECISO ENVIAR O CONTRATO PARA ASSINATURA E, APÓS, SEGUIR COM AS INSTALAÇÕES DO CIRCUITO.'}</Text>
+          </View>
+
+          <View style={pdfStyles.signatures}>
+            <View style={pdfStyles.signatureBlock}>
+              <Text style={pdfStyles.signatureLine}>NEXOCORP LTDA - ME</Text>
+              <Text style={pdfStyles.signatureRole}>Fornecedor</Text>
+            </View>
+            <View style={pdfStyles.signatureBlock}>
+              <Text style={pdfStyles.signatureLine}>{proposal.companyName || 'Cliente'}</Text>
+              <Text style={pdfStyles.signatureRole}>Cliente</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={pdfStyles.footer} fixed>
+          <Text style={pdfStyles.footerText}>Proposta gerada automaticamente. Válida conforme data indicada.</Text>
+          <Text style={pdfStyles.footerText}>#{proposal.id.substring(0, 8).toUpperCase()}</Text>
+        </View>
+      </Page>
+    </Document>
+  );
+}
 
 export function ProposalsList() {
   const navigate = useNavigate()

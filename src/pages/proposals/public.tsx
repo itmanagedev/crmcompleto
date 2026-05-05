@@ -7,125 +7,136 @@ import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer
 
 const pdfStyles = StyleSheet.create({
   page: { padding: 0, fontFamily: 'Helvetica', backgroundColor: '#ffffff' },
-  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '30 40', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' },
-  headerRight: { textAlign: 'right', fontSize: 9, color: '#64748b', lineHeight: 1.4 },
-  subHeader: { padding: '15 40', flexDirection: 'row', justifyContent: 'space-between', color: 'white', fontSize: 10, fontWeight: 'bold' },
-  content: { padding: 40 },
-  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#0f172a', marginBottom: 5 },
-  metaText: { fontSize: 9, color: '#64748b', marginBottom: 20 },
-  clientBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 4, marginBottom: 30, borderLeft: '4px solid #2563eb' },
-  clientLabel: { fontSize: 8, fontWeight: 'bold', marginBottom: 5, letterSpacing: 1 },
-  clientName: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 2 },
-  clientDetails: { fontSize: 10, color: '#475569', marginTop: 2 },
-  sectionTitle: { fontSize: 12, fontWeight: 'bold', marginBottom: 15, borderBottom: '1px solid #e2e8f0', paddingBottom: 5 },
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '20 40', backgroundColor: '#475569' },
+  headerLogoText: { fontSize: 24, fontWeight: 'bold', color: '#ffffff' },
+  headerRight: { textAlign: 'right', fontSize: 8, color: '#e2e8f0', lineHeight: 1.4 },
+  
+  subHeader: { padding: '8 40', flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#6366f1' },
+  subHeaderText: { color: '#ffffff', fontSize: 10, fontWeight: 'bold' },
+  
+  content: { padding: '30 40' },
+  mainTitle: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4, textTransform: 'uppercase' },
+  metaText: { fontSize: 9, color: '#64748b', marginBottom: 25 },
+  
+  twoCols: { flexDirection: 'row', gap: 20, marginBottom: 25 },
+  boxCol: { flex: 1, backgroundColor: '#f8fafc', padding: 15, borderLeft: '2px solid #cbd5e1' },
+  boxColTitle: { fontSize: 8, color: '#64748b', fontWeight: 'bold', marginBottom: 10, textTransform: 'uppercase' },
+  boxColHighlight: { fontSize: 12, fontWeight: 'bold', color: '#0f172a', marginBottom: 4, textTransform: 'uppercase' },
+  boxColText: { fontSize: 9, color: '#475569', marginBottom: 2 },
+  
+  sectionTitle: { fontSize: 10, fontWeight: 'bold', color: '#6366f1', marginBottom: 10, textTransform: 'uppercase' },
+  
   table: { width: '100%', marginBottom: 20 },
-  tableHeader: { flexDirection: 'row', borderBottom: '2px solid #e2e8f0', paddingBottom: 8, marginBottom: 8 },
-  tableRow: { flexDirection: 'row', borderBottom: '1px solid #f1f5f9', paddingVertical: 8, alignItems: 'center' },
-  tableRowSub: { flexDirection: 'row', borderBottom: '1px solid #f8fafc', paddingVertical: 6, alignItems: 'center', backgroundColor: '#fafafa' },
-  colDesc: { flex: 4, fontSize: 10, color: '#334155' },
-  colQtd: { flex: 1, fontSize: 10, textAlign: 'center', color: '#475569' },
-  colPrice: { flex: 1.5, fontSize: 10, textAlign: 'right', color: '#475569' },
-  colDisc: { flex: 1, fontSize: 10, textAlign: 'right', color: '#475569' },
-  colTotal: { flex: 1.5, fontSize: 10, textAlign: 'right', fontWeight: 'bold', color: '#0f172a' },
-  totalBox: { flexDirection: 'row', justifyContent: 'space-between', padding: '15 20', backgroundColor: '#f8fafc', borderRadius: 4, marginTop: 10, fontWeight: 'bold', fontSize: 14, color: '#0f172a' },
-  conditionsBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 4, marginTop: 10, fontSize: 9, lineHeight: 1.6, color: '#475569' },
-  signatures: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 60, paddingHorizontal: 20 },
-  signatureBlock: { alignItems: 'center' },
-  signatureLine: { borderTop: '1px solid #94a3b8', width: 200, paddingTop: 8, textAlign: 'center', fontSize: 9, color: '#0f172a', fontWeight: 'bold' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#475569', padding: '8 10', alignItems: 'center' },
+  tableHeaderItem: { color: '#ffffff', fontSize: 9, fontWeight: 'bold' },
+  tableRow: { flexDirection: 'row', borderBottom: '1px solid #f1f5f9', padding: '8 10', alignItems: 'center' },
+  tableRowSub: { flexDirection: 'row', padding: '4 10', paddingLeft: 20, alignItems: 'center' },
+  
+  colDesc: { flex: 4, fontSize: 9, color: '#334155', fontWeight: 'bold' },
+  colDescSub: { flex: 4, fontSize: 8, color: '#64748b' },
+  colQtd: { flex: 1, fontSize: 9, textAlign: 'center', color: '#475569' },
+  colPrice: { flex: 1.5, fontSize: 9, textAlign: 'right', color: '#475569' },
+  colDisc: { flex: 1, fontSize: 9, textAlign: 'right', color: '#475569' },
+  colTotal: { flex: 1.5, fontSize: 9, textAlign: 'right', color: '#334155' },
+  
+  totalsContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 5 },
+  totalBox: { backgroundColor: '#475569', padding: '10 20', borderRadius: 2, flexDirection: 'row', gap: 30, alignItems: 'center' },
+  totalBoxLabel: { color: '#ffffff', fontSize: 10, fontWeight: 'bold' },
+  totalBoxValue: { color: '#ffffff', fontSize: 14, fontWeight: 'bold' },
+  
+  conditionsBox: { backgroundColor: '#f8fafc', padding: 15, borderRadius: 2, fontSize: 9, color: '#475569', lineHeight: 1.5 },
+  
+  signatures: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 50, paddingHorizontal: 30 },
+  signatureBlock: { alignItems: 'center', width: 200 },
+  signatureLine: { borderTop: '1px solid #94a3b8', width: '100%', paddingTop: 8, textAlign: 'center', fontSize: 9, color: '#0f172a', textTransform: 'uppercase' },
   signatureRole: { textAlign: 'center', fontSize: 8, color: '#64748b', marginTop: 2 },
-  footer: { position: 'absolute', bottom: 20, left: 40, right: 40, textAlign: 'center', color: '#94a3b8', fontSize: 8, borderTop: '1px solid #e2e8f0', paddingTop: 10 }
+  
+  footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: 10 },
+  footerText: { color: '#94a3b8', fontSize: 7 }
 })
 
 const SimpleProposalPDF = ({ proposal }: { proposal: any }) => {
-  const primaryColor = '#3b82f6'; // Default color
-  const services = proposal.services || [];
+  const primaryColor = '#6366f1'; // Default color
+  const services = proposal.services ? (typeof proposal.services === 'string' ? JSON.parse(proposal.services) : proposal.services) : [];
   
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.headerContainer}>
-          <View>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: primaryColor }}>NEXOCORP</Text>
-            <Text style={{ fontSize: 9, color: '#64748b', marginTop: 4 }}>Soluções em Tecnologia</Text>
-          </View>
+          <Text style={pdfStyles.headerLogoText}>NEXOCORP</Text>
           <View style={pdfStyles.headerRight}>
-            <Text>CNPJ: 60.490.491/0001-28</Text>
-            <Text>Av. Oliveira Paiva, 1206 - Térreo</Text>
-            <Text>Fortaleza - CE, 60822-130</Text>
-            <Text>contato@nexocorp.com.br</Text>
+            <Text>60.490.491/0001-28</Text>
+            <Text>Av. Oliveira Paiva, 1206 - Térreo - Cidade dos Funcionários - Fortaleza - CE</Text>
+            <Text>financeiro@nexocorp.com.br</Text>
             <Text>www.nexocorp.com.br</Text>
           </View>
         </View>
 
         <View style={{ ...pdfStyles.subHeader, backgroundColor: primaryColor }}>
-          <Text>PROPOSTA COMERCIAL #{proposal.id.substring(0, 8).toUpperCase()}</Text>
-          <Text>Válida até {proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '-'}</Text>
+          <Text style={pdfStyles.subHeaderText}>PROPOSTA COMERCIAL #{proposal.id.substring(0, 8).toUpperCase()}</Text>
+          <Text style={pdfStyles.subHeaderText}>Válida até {proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '-'}</Text>
         </View>
 
         <View style={pdfStyles.content}>
-          <Text style={pdfStyles.mainTitle}>{proposal.title}</Text>
-          <Text style={pdfStyles.metaText}>Data de Emissão: {new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</Text>
+          <Text style={pdfStyles.mainTitle}>{proposal.title || 'PROPOSTA COMERCIAL'}</Text>
+          <Text style={pdfStyles.metaText}>Emitida em: {new Date(proposal.createdAt).toLocaleDateString('pt-BR')} • Vendedor: {proposal.contactName || 'Consultor'}</Text>
 
-          <View style={{ ...pdfStyles.clientBox, borderLeftColor: primaryColor }}>
-            <Text style={{ ...pdfStyles.clientLabel, color: primaryColor }}>DADOS DO CLIENTE</Text>
-            <Text style={pdfStyles.clientName}>{proposal.companyName || 'Cliente não informado'}</Text>
-            <Text style={pdfStyles.clientDetails}>A/C: {proposal.contactName || 'Contato não informado'}</Text>
+          <View style={pdfStyles.twoCols}>
+            <View style={{ ...pdfStyles.boxCol, borderLeftColor: primaryColor }}>
+              <Text style={pdfStyles.boxColTitle}>CLIENTE</Text>
+              <Text style={pdfStyles.boxColHighlight}>{proposal.companyName || 'Cliente não informado'}</Text>
+              <Text style={pdfStyles.boxColText}>A/C: {proposal.contactName || 'Não informado'}</Text>
+            </View>
+            <View style={{ ...pdfStyles.boxCol, borderLeftColor: primaryColor }}>
+              <Text style={pdfStyles.boxColTitle}>PAGAMENTO</Text>
+              <Text style={pdfStyles.boxColText}>Forma: PIX</Text>
+              <Text style={pdfStyles.boxColText}>TBD Conforme Proposta</Text>
+            </View>
           </View>
 
-          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor, borderBottomColor: primaryColor }}>ESCOPO DA PROPOSTA</Text>
+          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor }}>ITENS DA PROPOSTA</Text>
           
-          <Text style={{ fontSize: 10, color: '#334155', marginBottom: 15, lineHeight: 1.5 }}>
-            Apresentamos abaixo nossa proposta comercial para os serviços solicitados, elaborada com base nas necessidades identificadas.
-          </Text>
-
           <View style={pdfStyles.table}>
-            <View style={{...pdfStyles.tableHeader, borderBottomColor: primaryColor}}>
-              <Text style={{...pdfStyles.colDesc, fontWeight: 'bold', color: primaryColor}}>Descrição do Item</Text>
-              <Text style={{...pdfStyles.colQtd, fontWeight: 'bold', color: primaryColor}}>Qtd</Text>
-              <Text style={{...pdfStyles.colPrice, fontWeight: 'bold', color: primaryColor}}>V. Unitário</Text>
-              <Text style={{...pdfStyles.colDisc, fontWeight: 'bold', color: primaryColor}}>Desc.</Text>
-              <Text style={{...pdfStyles.colTotal, fontWeight: 'bold', color: primaryColor}}>V. Total</Text>
+            <View style={pdfStyles.tableHeader}>
+              <Text style={{ ...pdfStyles.colDesc, color: '#ffffff' }}>Descrição</Text>
+              <Text style={{ ...pdfStyles.colQtd, color: '#ffffff' }}>Qtd</Text>
+              <Text style={{ ...pdfStyles.colPrice, color: '#ffffff' }}>Preço Unit.</Text>
+              <Text style={{ ...pdfStyles.colDisc, color: '#ffffff' }}>Desc%</Text>
+              <Text style={{ ...pdfStyles.colTotal, color: '#ffffff' }}>Subtotal</Text>
             </View>
             
             {services.map((item: any, index: number) => (
-              <React.Fragment key={item.id}>
-                <View style={{...pdfStyles.tableRow, backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc'}}>
-                  <Text style={{...pdfStyles.colDesc, fontWeight: 'bold'}}>{item.description || 'Serviço'}</Text>
-                  <Text style={pdfStyles.colQtd}>{item.quantity} {item.unit || 'un'}</Text>
-                  <Text style={pdfStyles.colPrice}>R$ {(item.unitPrice || 0).toFixed(2)}</Text>
+              <React.Fragment key={item.id || index}>
+                <View style={{ ...pdfStyles.tableRow, backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                  <Text style={pdfStyles.colDesc}>{item.description || 'Serviço'}</Text>
+                  <Text style={pdfStyles.colQtd}>{item.quantity}</Text>
+                  <Text style={pdfStyles.colPrice}>R$ {parseFloat(item.unitPrice || 0).toFixed(2)}</Text>
                   <Text style={pdfStyles.colDisc}>{item.discount > 0 ? `${item.discount}%` : '-'}</Text>
                   <Text style={pdfStyles.colTotal}>R$ {((item.quantity * (item.unitPrice || 0)) * (1 - (item.discount || 0) / 100)).toFixed(2)}</Text>
                 </View>
-                {item.subItems && item.subItems.map((sub: any) => (
-                  <View style={pdfStyles.tableRowSub} key={sub.id}>
-                    <Text style={{...pdfStyles.colDesc, paddingLeft: 10, color: '#64748b'}}>• {sub.description || 'Equipamento'}</Text>
-                    <Text style={{...pdfStyles.colQtd, color: '#64748b'}}>{sub.quantity} {sub.unit || 'un'}</Text>
-                    <Text style={pdfStyles.colPrice}>-</Text>
+                {item.subItems && item.subItems.map((sub: any, subIndex: number) => (
+                  <View style={pdfStyles.tableRowSub} key={sub.id || subIndex}>
+                    <Text style={pdfStyles.colDescSub}>└ {sub.description || 'Equipamento'}</Text>
+                    <Text style={pdfStyles.colQtd}>{sub.quantity}</Text>
+                    <Text style={pdfStyles.colPrice}>R$ 0,00</Text>
                     <Text style={pdfStyles.colDisc}>-</Text>
-                    <Text style={pdfStyles.colTotal}>-</Text>
+                    <Text style={pdfStyles.colTotal}>R$ 0,00</Text>
                   </View>
                 ))}
               </React.Fragment>
             ))}
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
-            <View style={{ width: 250 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, marginTop: 5 }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: primaryColor }}>VALOR TOTAL:</Text>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', color: primaryColor }}>R$ {(proposal.totalValue || 0).toFixed(2)}</Text>
-              </View>
+          <View style={pdfStyles.totalsContainer}>
+            <View style={pdfStyles.totalBox}>
+              <Text style={pdfStyles.totalBoxLabel}>TOTAL</Text>
+              <Text style={pdfStyles.totalBoxValue}>R$ {parseFloat(proposal.totalValue || 0).toFixed(2)}</Text>
             </View>
           </View>
 
-          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor, borderBottomColor: primaryColor, marginTop: 30 }}>TERMOS E CONDIÇÕES</Text>
+          <Text style={{ ...pdfStyles.sectionTitle, color: primaryColor, marginTop: 30 }}>CONDIÇÕES COMERCIAIS</Text>
           <View style={pdfStyles.conditionsBox}>
-            {proposal.observations && (
-              <>
-                <Text style={{ fontWeight: 'bold', marginBottom: 4, color: '#0f172a' }}>Observações Adicionais:</Text>
-                <Text>{proposal.observations}</Text>
-              </>
-            )}
+            <Text>{proposal.observations || 'EM CASO DE ACEITE, PRECISO ENVIAR O CONTRATO PARA ASSINATURA E, APÓS, SEGUIR COM AS INSTALAÇÕES DO CIRCUITO.'}</Text>
           </View>
 
           <View style={pdfStyles.signatures}>
@@ -135,14 +146,15 @@ const SimpleProposalPDF = ({ proposal }: { proposal: any }) => {
             </View>
             <View style={pdfStyles.signatureBlock}>
               <Text style={pdfStyles.signatureLine}>{proposal.companyName || 'Cliente'}</Text>
-              <Text style={pdfStyles.signatureRole}>De Acordo (Cliente)</Text>
+              <Text style={pdfStyles.signatureRole}>Cliente</Text>
             </View>
           </View>
         </View>
 
-        <Text style={pdfStyles.footer} render={({ pageNumber, totalPages }) => (
-          `Documento gerado eletronicamente - Página ${pageNumber} de ${totalPages}`
-        )} fixed />
+        <View style={pdfStyles.footer} fixed>
+          <Text style={pdfStyles.footerText}>Proposta gerada automaticamente. Válida conforme data indicada.</Text>
+          <Text style={pdfStyles.footerText}>#{proposal.id.substring(0, 8).toUpperCase()}</Text>
+        </View>
       </Page>
     </Document>
   );
