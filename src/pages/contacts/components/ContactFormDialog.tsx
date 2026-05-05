@@ -35,6 +35,7 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSave }: Conta
     phone: '',
     status: 'lead',
   })
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (contact) {
@@ -49,6 +50,7 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSave }: Conta
         status: 'lead',
       })
     }
+    setError(null)
   }, [contact, open])
 
   const handleChange = (field: keyof Contact, value: string) => {
@@ -57,6 +59,11 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSave }: Conta
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.name || formData.name.trim() === '') {
+      setError('O nome do contato é obrigatório.')
+      return
+    }
+    setError(null)
     onSave(formData)
     onOpenChange(false)
   }
@@ -71,6 +78,11 @@ export function ContactFormDialog({ open, onOpenChange, contact, onSave }: Conta
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          {error && (
+            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2 col-span-2">
               <Label htmlFor="name">Nome Completo</Label>

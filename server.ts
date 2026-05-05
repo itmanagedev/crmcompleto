@@ -62,12 +62,27 @@ async function startServer() {
   app.post("/api/companies", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.tags) data.tags = JSON.stringify(data.tags);
-      delete data.contactsCount;
-      delete data.dealsCount;
-      delete data.owner;
-      delete data.logo;
-      const company = await prisma.company.create({ data });
+      
+      const createData: any = {
+        name: data.name,
+      };
+
+      if (data.industry) createData.industry = data.industry;
+      if (data.size) createData.size = data.size;
+      if (data.revenue) createData.revenue = data.revenue;
+      if (data.city) createData.city = data.city;
+      if (data.state) createData.state = data.state;
+      if (data.email) createData.email = data.email;
+      if (data.phone) createData.phone = data.phone;
+      if (data.linkedin) createData.linkedin = data.linkedin;
+      if (data.website) createData.website = data.website;
+      if (data.address) createData.address = data.address;
+      if (data.cnpj) createData.cnpj = data.cnpj;
+      if (data.status) createData.status = data.status;
+      if (data.tags) createData.tags = JSON.stringify(data.tags);
+      if (data.ownerId) createData.ownerId = data.ownerId;
+
+      const company = await prisma.company.create({ data: createData });
       res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
     } catch (error: any) {
       console.error(error);
@@ -91,16 +106,27 @@ async function startServer() {
   app.put("/api/companies/:id", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.tags) data.tags = JSON.stringify(data.tags);
-      delete data.id;
-      delete data.contactsCount;
-      delete data.dealsCount;
-      delete data.owner;
-      delete data.logo;
-      delete data._count;
+
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.industry !== undefined) updateData.industry = data.industry;
+      if (data.size !== undefined) updateData.size = data.size;
+      if (data.revenue !== undefined) updateData.revenue = data.revenue;
+      if (data.city !== undefined) updateData.city = data.city;
+      if (data.state !== undefined) updateData.state = data.state;
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if (data.linkedin !== undefined) updateData.linkedin = data.linkedin;
+      if (data.website !== undefined) updateData.website = data.website;
+      if (data.address !== undefined) updateData.address = data.address;
+      if (data.cnpj !== undefined) updateData.cnpj = data.cnpj;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags);
+      if (data.ownerId !== undefined) updateData.ownerId = data.ownerId;
+
       const company = await prisma.company.update({
         where: { id: req.params.id },
-        data
+        data: updateData
       });
       res.json({ ...company, tags: JSON.parse(company.tags || "[]") });
     } catch (error: any) {
@@ -139,40 +165,55 @@ async function startServer() {
   app.post("/api/contacts", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.tags) data.tags = JSON.stringify(data.tags);
-      if (data.company) {
-        data.companyName = data.company;
-        delete data.company;
-      }
-      delete data.lastContact;
-      delete data.owner;
-      const contact = await prisma.contact.create({ data });
+      
+      const createData: any = {
+        name: data.name,
+      };
+      
+      if (data.role) createData.role = data.role;
+      if (data.email) createData.email = data.email;
+      if (data.phone) createData.phone = data.phone;
+      if (data.linkedin) createData.linkedin = data.linkedin;
+      if (data.avatar) createData.avatar = data.avatar;
+      if (data.status) createData.status = data.status;
+      if (data.tags) createData.tags = JSON.stringify(data.tags);
+      if (data.company) createData.companyName = data.company;
+      if (data.companyId) createData.companyId = data.companyId;
+
+      const contact = await prisma.contact.create({ data: createData });
       res.json({ ...contact, company: contact.companyName, tags: JSON.parse(contact.tags || "[]") });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to create contact" });
+      res.status(500).json({ error: error.message || "Failed to create contact" });
     }
   });
 
   app.put("/api/contacts/:id", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.tags) data.tags = JSON.stringify(data.tags);
-      if (data.company) {
-        data.companyName = data.company;
-        delete data.company;
-      }
-      delete data.id;
-      delete data.lastContact;
-      delete data.owner;
+      
+      const updateData: any = {
+        name: data.name,
+      };
+
+      if (data.role !== undefined) updateData.role = data.role;
+      if (data.email !== undefined) updateData.email = data.email;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if (data.linkedin !== undefined) updateData.linkedin = data.linkedin;
+      if (data.avatar !== undefined) updateData.avatar = data.avatar;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags);
+      if (data.company !== undefined) updateData.companyName = data.company;
+      if (data.companyId !== undefined) updateData.companyId = data.companyId;
+
       const contact = await prisma.contact.update({
         where: { id: req.params.id },
-        data
+        data: updateData
       });
       res.json({ ...contact, company: contact.companyName, tags: JSON.parse(contact.tags || "[]") });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to update contact" });
+      res.status(500).json({ error: error.message || "Failed to update contact" });
     }
   });
 
@@ -523,32 +564,53 @@ async function startServer() {
   app.post("/api/deals", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.expectedCloseDate) {
-        data.expectedCloseDate = new Date(data.expectedCloseDate);
-      }
-      const deal = await prisma.deal.create({ data });
+      
+      const createData: any = {
+        title: data.title,
+        stage: data.stage,
+      };
+
+      if (data.value !== undefined) createData.value = data.value;
+      if (data.status) createData.status = data.status;
+      if (data.probability !== undefined) createData.probability = data.probability;
+      if (data.expectedCloseDate) createData.expectedCloseDate = new Date(data.expectedCloseDate);
+      if (data.companyName) createData.companyName = data.companyName;
+      if (data.companyId) createData.companyId = data.companyId;
+      if (data.contactId) createData.contactId = data.contactId;
+      if (data.ownerId) createData.ownerId = data.ownerId;
+
+      const deal = await prisma.deal.create({ data: createData });
       res.json(deal);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to create deal" });
+      res.status(500).json({ error: error.message || "Failed to create deal" });
     }
   });
 
   app.put("/api/deals/:id", async (req, res) => {
     try {
       const data = { ...req.body };
-      if (data.expectedCloseDate) {
-        data.expectedCloseDate = new Date(data.expectedCloseDate);
-      }
-      delete data.id;
+      
+      const updateData: any = {};
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.value !== undefined) updateData.value = data.value;
+      if (data.stage !== undefined) updateData.stage = data.stage;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.probability !== undefined) updateData.probability = data.probability;
+      if (data.expectedCloseDate !== undefined) updateData.expectedCloseDate = data.expectedCloseDate ? new Date(data.expectedCloseDate) : null;
+      if (data.companyName !== undefined) updateData.companyName = data.companyName;
+      if (data.companyId !== undefined) updateData.companyId = data.companyId;
+      if (data.contactId !== undefined) updateData.contactId = data.contactId;
+      if (data.ownerId !== undefined) updateData.ownerId = data.ownerId;
+
       const deal = await prisma.deal.update({
         where: { id: req.params.id },
-        data
+        data: updateData
       });
       res.json(deal);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Failed to update deal" });
+      res.status(500).json({ error: error.message || "Failed to update deal" });
     }
   });
 

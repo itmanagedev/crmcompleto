@@ -550,7 +550,8 @@ export function Pipeline() {
             } : null)
           }
         } else {
-          alert('Erro ao atualizar deal')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao atualizar deal: ${errData.error || res.statusText}`)
         }
       } else {
         const res = await fetch('/api/deals', {
@@ -583,7 +584,8 @@ export function Pipeline() {
           }
           setDeals([...deals, newDeal])
         } else {
-          alert('Erro ao criar deal')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao criar deal: ${errData.error || res.statusText}`)
         }
       }
     } catch (error) {

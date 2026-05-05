@@ -95,7 +95,8 @@ export function ContactsList() {
           const updated = await res.json()
           setContacts(contacts.map(c => c.id === editingContact.id ? { ...c, ...updated } : c))
         } else {
-          alert('Erro ao atualizar contato')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao atualizar contato: ${errData.error || res.statusText}`)
         }
       } else {
         const res = await fetch('/api/contacts', {
@@ -112,7 +113,8 @@ export function ContactsList() {
           const created = await res.json()
           setContacts([created, ...contacts])
         } else {
-          alert('Erro ao criar contato')
+          const errData = await res.json().catch(() => ({}))
+          alert(`Erro ao criar contato: ${errData.error || res.statusText}`)
         }
       }
     } catch (error) {
