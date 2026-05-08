@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Check, ChevronRight, Save, FileText, Send, Plus, Trash2, GripVertical, Download, Mail, Layers } from "lucide-react"
+import { Check, ChevronRight, Save, FileText, Send, Plus, Trash2, GripVertical, Download, Mail, Layers, Wrench, Package } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { Label } from "@/src/components/ui/label"
@@ -130,7 +130,7 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
             {items.map((item: any, index: number) => (
               <React.Fragment key={item.id}>
                 <View style={{ ...pdfStyles.tableRow, backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                  <Text style={pdfStyles.colDesc}>{item.description || 'Serviço'}</Text>
+                  <Text style={pdfStyles.colDesc}>{item.name || item.description || 'Serviço'}</Text>
                   <Text style={pdfStyles.colQtd}>{item.quantity}</Text>
                   <Text style={pdfStyles.colPrice}>R$ {parseFloat(item.unitPrice || 0).toFixed(2)}</Text>
                   <Text style={pdfStyles.colDisc}>{item.discount > 0 ? `${item.discount}%` : '-'}</Text>
@@ -138,11 +138,11 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
                 </View>
                 {item.subItems && item.subItems.map((sub: any) => (
                   <View style={pdfStyles.tableRowSub} key={sub.id}>
-                    <Text style={pdfStyles.colDescSub}>└ {sub.description || 'Equipamento'}</Text>
+                    <Text style={pdfStyles.colDescSub}>└ {sub.name || sub.description || 'Equipamento'}</Text>
                     <Text style={pdfStyles.colQtd}>{sub.quantity}</Text>
-                    <Text style={pdfStyles.colPrice}>R$ 0,00</Text>
+                    <Text style={pdfStyles.colPrice}>R$ {parseFloat(sub.unitPrice || 0).toFixed(2)}</Text>
                     <Text style={pdfStyles.colDisc}>-</Text>
-                    <Text style={pdfStyles.colTotal}>R$ 0,00</Text>
+                    <Text style={pdfStyles.colTotal}>R$ {((sub.quantity * (sub.unitPrice || 0))).toFixed(2)}</Text>
                   </View>
                 ))}
               </React.Fragment>
@@ -183,91 +183,137 @@ const ProposalPDF = ({ basicData, visualData, items, subtotal, total, selectedCo
 }
 
 // --- Sortable Item Component ---
-function SortableItem({ item, onUpdate, onRemove, onAddSubItem, onUpdateSubItem, onRemoveSubItem }: { item: ProposalItem, onUpdate: (id: string, field: keyof ProposalItem, value: any) => void, onRemove: (id: string) => void, onAddSubItem: (parentId: string) => void, onUpdateSubItem: (parentId: string, subId: string, field: keyof ProposalItem, value: any) => void, onRemoveSubItem: (parentId: string, subId: string) => void }) {
+function SortableItem({ item, index, onUpdate, onRemove, onAddSubItem, onUpdateSubItem, onRemoveSubItem }: { item: ProposalItem, index: number, onUpdate: (id: string, field: keyof ProposalItem, value: any) => void, onRemove: (id: string) => void, onAddSubItem: (parentId: string) => void, onUpdateSubItem: (parentId: string, subId: string, field: keyof ProposalItem, value: any) => void, onRemoveSubItem: (parentId: string, subId: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
 
-  const subtotal = item.quantity * item.unitPrice
-  const discountAmount = subtotal * (item.discount / 100)
-  const itemTotal = subtotal - discountAmount
+  const subtotalService = item.quantity * item.unitPrice
+  const discountAmount = subtotalService * (item.discount / 100)
+  const itemTotal = subtotalService - discountAmount
   
-  const total = itemTotal
+  const subItemsTotal = (item.subItems || []).reduce((acc, subItem) => {
+    const subSub = subItem.quantity * (subItem.unitPrice || 0)
+    const subDisc = subSub * ((subItem.discount || 0) / 100)
+    return acc + subSub - subDisc
+  }, 0)
+
+  const total = itemTotal + subItemsTotal
 
   return (
-    <div ref={setNodeRef} style={style} className="flex flex-col gap-2 p-4 bg-card border rounded-lg shadow-sm group">
-      <div className="flex items-center gap-4">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-          <GripVertical className="h-5 w-5" />
+    <div ref={setNodeRef} style={style} className="flex flex-col bg-card border rounded-lg shadow-sm group mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-blue-50/50 border-b rounded-t-lg">
+        <div className="flex items-center gap-2">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-blue-500 hover:text-blue-700 p-1 bg-blue-100 rounded">
+            <Wrench className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-sm text-blue-600 tracking-wide uppercase">Serviço {index + 1}</span>
+          <span className="text-sm text-muted-foreground ml-2 uppercase">{item.name || item.description || ''}</span>
         </div>
-        <div className="grid grid-cols-12 gap-4 flex-1 items-center">
-          <div className="col-span-3">
-            <Input value={item.description} onChange={(e) => onUpdate(item.id, 'description', e.target.value)} placeholder="Descrição do serviço" className="font-semibold" />
-          </div>
-          <div className="col-span-2">
-            <Input type="number" value={item.quantity} onChange={(e) => onUpdate(item.id, 'quantity', Number(e.target.value))} min={1} />
-          </div>
-          <div className="col-span-2">
-            <Select value={item.unit} onValueChange={(val) => onUpdate(item.id, 'unit', val)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="un">Un</SelectItem>
-                <SelectItem value="h">Horas</SelectItem>
-                <SelectItem value="mes">Mês</SelectItem>
-                <SelectItem value="lic">Licença</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2">
-            <Input type="number" value={item.unitPrice} onChange={(e) => onUpdate(item.id, 'unitPrice', Number(e.target.value))} min={0} step="0.01" />
-          </div>
-          <div className="col-span-1">
-            <Input type="number" value={item.discount} onChange={(e) => onUpdate(item.id, 'discount', Number(e.target.value))} min={0} max={100} placeholder="Desc %" />
-          </div>
-          <div className="col-span-2 text-right font-medium">
-            R$ {total.toFixed(2)}
-          </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8">
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onAddSubItem(item.id)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" title="Adicionar Equipamento/Item">
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Trash2 className="h-4 w-4" />
-        </Button>
       </div>
 
-      {item.subItems && item.subItems.length > 0 && (
-        <div className="pl-12 space-y-2 mt-2">
-          {item.subItems.map(subItem => {
-            return (
-              <div key={subItem.id} className="flex items-center gap-4 p-2 bg-muted/30 border rounded-md group/sub">
-                <div className="text-muted-foreground">└</div>
-                <div className="grid grid-cols-12 gap-4 flex-1 items-center">
-                  <div className="col-span-6">
-                    <Input value={subItem.description} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'description', e.target.value)} placeholder="Equipamento/Item" className="h-8 text-sm" />
+      <div className="p-4 space-y-6">
+        {/* Row 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Nome do Serviço *</Label>
+            <Input value={item.name !== undefined ? item.name : item.description} onChange={(e) => {
+              onUpdate(item.id, 'name', e.target.value)
+              // Update description as fallback if name is empty
+              if (!item.description) onUpdate(item.id, 'description', e.target.value)
+            }} placeholder="Ex: LINK DEDICADO - 100MB" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Descrição do Serviço</Label>
+            <Input value={item.details || ''} onChange={(e) => onUpdate(item.id, 'details', e.target.value)} placeholder="Detalhes adicionais" />
+          </div>
+        </div>
+
+        {/* Row 2 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Qtd / Horas</Label>
+            <Input type="number" value={item.quantity} onChange={(e) => onUpdate(item.id, 'quantity', Number(e.target.value))} min={1} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Preço do Serviço (R$)</Label>
+            <Input type="number" value={item.unitPrice} onChange={(e) => onUpdate(item.id, 'unitPrice', Number(e.target.value))} min={0} step="0.01" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Desconto %</Label>
+            <Input type="number" value={item.discount} onChange={(e) => onUpdate(item.id, 'discount', Number(e.target.value))} min={0} max={100} />
+          </div>
+          <div className="space-y-1.5 flex flex-col justify-end pb-2">
+            <Label className="text-xs text-muted-foreground mb-1">Subtotal Serviço</Label>
+            <span className="font-medium text-blue-600">R$ {itemTotal.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Sub-items Section */}
+        <div className="pt-4 border-t space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Package className="h-4 w-4" />
+              <span>Itens / Equipamentos ({item.subItems?.length || 0} itens)</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => onAddSubItem(item.id)} className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50">
+              <Plus className="h-3 w-3 mr-1" /> Adicionar item
+            </Button>
+          </div>
+
+          {item.subItems && item.subItems.length > 0 && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-12 gap-2 px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="col-span-4">Item / Equipamento</div>
+                <div className="col-span-4">Descrição / Especificação</div>
+                <div className="col-span-1 text-center">Qtd</div>
+                <div className="col-span-2">Preço Unit.</div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              {item.subItems.map(subItem => (
+                <div key={subItem.id} className="grid grid-cols-12 gap-2 items-center bg-muted/20 p-2 rounded-md">
+                  <div className="col-span-4">
+                    <Input value={subItem.name !== undefined ? subItem.name : subItem.description} onChange={(e) => {
+                      onUpdateSubItem(item.id, subItem.id, 'name', e.target.value)
+                      if (!subItem.description) onUpdateSubItem(item.id, subItem.id, 'description', e.target.value)
+                    }} placeholder="Ex: ONU" className="h-8 text-sm" />
                   </div>
-                  <div className="col-span-3">
-                    <Input type="number" value={subItem.quantity} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'quantity', Number(e.target.value))} min={1} className="h-8 text-sm" />
+                  <div className="col-span-4">
+                    <Input value={subItem.details || ''} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'details', e.target.value)} placeholder="Ex: ZTE" className="h-8 text-sm" />
                   </div>
-                  <div className="col-span-3">
-                    <Select value={subItem.unit} onValueChange={(val) => onUpdateSubItem(item.id, subItem.id, 'unit', val)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="un">Un</SelectItem>
-                        <SelectItem value="h">Horas</SelectItem>
-                        <SelectItem value="mes">Mês</SelectItem>
-                        <SelectItem value="lic">Licença</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="col-span-1">
+                    <Input type="number" value={subItem.quantity} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'quantity', Number(e.target.value))} min={1} className="h-8 text-sm text-center" />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" value={subItem.unitPrice || 0} onChange={(e) => onUpdateSubItem(item.id, subItem.id, 'unitPrice', Number(e.target.value))} min={0} step="0.01" className="h-8 text-sm" />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <Button variant="ghost" size="icon" onClick={() => onRemoveSubItem(item.id, subItem.id)} className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onRemoveSubItem(item.id, subItem.id)} className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+              ))}
+              
+              <div className="flex justify-end pt-2 text-sm">
+                <span className="text-muted-foreground mr-2">Subtotal itens:</span>
+                <span className="font-medium">R$ {subItemsTotal.toFixed(2)}</span>
               </div>
-            )
-          })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <div className="bg-muted/10 p-4 border-t flex justify-end items-center">
+        <span className="text-sm font-medium text-muted-foreground mr-3">Total do Serviço {index + 1}:</span>
+        <span className="text-lg font-bold text-blue-600">R$ {total.toFixed(2)}</span>
+      </div>
     </div>
   )
 }
@@ -673,30 +719,25 @@ export function NewProposal() {
       case 2:
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Itens da Proposta</h3>
+            <div className="flex justify-between items-center bg-card p-4 rounded-lg border shadow-sm">
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Serviços</h3>
+                <p className="text-sm text-muted-foreground mt-1">Cada serviço pode conter seus próprios itens e equipamentos</p>
+              </div>
               <div className="flex gap-2">
                 <Button onClick={() => setIsCatalogDialogOpen(true)} size="sm" variant="outline"><Layers className="h-4 w-4 mr-2" /> Importar do Catálogo</Button>
-                <Button onClick={addItem} size="sm" variant="outline"><Plus className="h-4 w-4 mr-2" /> Adicionar Item</Button>
+                <Button onClick={addItem} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white"><Plus className="h-4 w-4 mr-2" /> Adicionar Serviço</Button>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground bg-muted/50 rounded-t-lg border-b">
-              <div className="col-span-3 pl-8">Descrição</div>
-              <div className="col-span-2">Qtd</div>
-              <div className="col-span-2">Unidade</div>
-              <div className="col-span-2">Preço Unit.</div>
-              <div className="col-span-1">Desc %</div>
-              <div className="col-span-2 text-right pr-8">Subtotal</div>
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                  {items.map(item => (
+                <div className="space-y-4">
+                  {items.map((item, index) => (
                     <SortableItem 
                       key={item.id} 
                       item={item} 
+                      index={index}
                       onUpdate={updateItem} 
                       onRemove={removeItem} 
                       onAddSubItem={addSubItem}

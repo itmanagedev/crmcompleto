@@ -278,7 +278,10 @@ export default function PublicProposalView() {
                       return (
                         <React.Fragment key={item.id}>
                           <tr>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{item.description}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                              <p>{item.name || item.description}</p>
+                              {item.details && <p className="text-xs text-gray-500 font-normal mt-1">{item.details}</p>}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{item.quantity} {item.unit}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">R$ {item.unitPrice.toFixed(2)}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.discount || 0}%</td>
@@ -287,11 +290,14 @@ export default function PublicProposalView() {
                           {item.subItems && item.subItems.length > 0 && item.subItems.map((subItem: any) => {
                             return (
                               <tr key={subItem.id} className="bg-gray-50/50">
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 pl-10">↳ {subItem.description}</td>
+                                <td className="px-6 py-2 text-sm text-gray-500 pl-10">
+                                  <p>↳ {subItem.name || subItem.description}</p>
+                                  {subItem.details && <p className="text-xs font-normal mt-0.5 ml-4">{subItem.details}</p>}
+                                </td>
                                 <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{subItem.quantity} {subItem.unit}</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">R$ {parseFloat(subItem.unitPrice || 0).toFixed(2)}</td>
                                 <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
-                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">-</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-right">R$ {((subItem.quantity * (subItem.unitPrice || 0))).toFixed(2)}</td>
                               </tr>
                             );
                           })}
